@@ -181,12 +181,12 @@ C
       DOUBLE PRECISION V1I, V2I, V3I, V1O, V2O, V3O
 	DOUBLE PRECISION SIGR2, SIGT2, SIGR3, SIGT3, SIGR4, SIGT4
 	DOUBLE PRECISION SIGR5, SIGT5, SIG2, SIG3, SIG4, SIG5
-	DOUBLE PRECISION SI, SO, SI1, SO1, FI, FO, GI, GO
+	DOUBLE PRECISION SII, SO, SI1, SO1, FI, FO, GI, GO
 	DOUBLE PRECISION PROBER, PROBET
 	DOUBLE PRECISION TEMP
 C  Note: SIGR2, SIGT2, SIGR3, SIGT3, SIGR4, SIGT4, SIGR5, SIGT5, SIG2, SIG3, SIG4, SIG5, 
 C        SI, SO, FI, FO, GI, GO change with the order i of stress components
-	DOUBLE PRECISION PI, PO, CI, CO, R, DR, FLUI
+	DOUBLE PRECISION PI, PO, CII, CO, R, DR, FLUI
       INTEGER NDIVI, NDIVS, NDIVO
 	INTEGER I, J, K
 	CHARACTER*4 MCODE
@@ -276,7 +276,7 @@ C  Prepare fluence, pressure and creep quantities
 C    Stresses are additive; boundary conditions should exclude residual stresses
         PI = -PRESS-SIGR(1)
 	  PO = -PAMB-SIGR(NDIV)
-	  CI = IPYCREEP
+	  CII = IPYCREEP
 	  CO = OPYCREEP
 C
 C  Initialize arrays P and Q
@@ -434,31 +434,31 @@ C
 	    FLUI = FLUI*FLU
 C
           IF (I .LE. NDEG) THEN
-	      SI = (L4I*ISWR(I)+L2I*ISWT(I))/((I+1.0)*(L1I*L4I-L2I*L3I))
+	      SII = (L4I*ISWR(I)+L2I*ISWT(I))/((I+1.0)*(L1I*L4I-L2I*L3I))
 	      SO = (L4O*OSWR(I)+L2O*OSWT(I))/((I+1.0)*(L1O*L4O-L2O*L3O))
 	      SI1 = G2I*(ISWR(I)-ISWT(I))/(I+1.0)
 	      SO1 = G2O*(OSWR(I)-OSWT(I))/(I+1.0)
-	      FI = (-CI)*V3I*GI/(X2*L4I*(I+1.0))+(ISWR(I)-ISWT(I))/
+	      FI = (-CII)*V3I*GI/(X2*L4I*(I+1.0))+(ISWR(I)-ISWT(I))/
      &           (L4I*(I+1.0))
 	      FO = (-CO)*V3O*GO/(X2*L4O*(I+1.0))+(OSWR(I)-OSWT(I))/
      &           (L4O*(I+1.0))
-	      GI = FI - CI*G1I*V1I*GI/(I+1.0)
+	      GI = FI - CII*G1I*V1I*GI/(I+1.0)
 	      GO = FO - CO*G1O*V1O*GO/(I+1.0)
 	    ELSE
-	      SI = 0.0
+	      SII = 0.0
 	      SO = 0.0
 	      SI1 = 0.0
 	      SO1 = 0.0
-	      FI = (-CI)*V3I*GI/(X2*L4I*(I+1.0))
+	      FI = (-CII)*V3I*GI/(X2*L4I*(I+1.0))
 	      FO = (-CO)*V3O*GO/(X2*L4O*(I+1.0))
-	      GI = FI - CI*G1I*V1I*GI/(I+1.0)
+	      GI = FI - CII*G1I*V1I*GI/(I+1.0)
 	      GO = FO - CO*G1O*V1O*GO/(I+1.0)
 	    END IF
 C
 C  Calculate A(I+1), B(I+1), D(I+1), F(I+1), M(I+1), N(I+1)
 C    Step 1: Assign new values to Q(NDIM)
-	    Q(1) = (-X2*FI*(DLOG(R2)+G3I)/X3+CI*G2I*SIG2+SI)/G1I
-	    Q(2) = (-X2*FI*(DLOG(R3)+G3I)/X3+CI*G2I*SIG3+SI)/G1I
+	    Q(1) = (-X2*FI*(DLOG(R2)+G3I)/X3+CII*G2I*SIG2+SII)/G1I
+	    Q(2) = (-X2*FI*(DLOG(R3)+G3I)/X3+CII*G2I*SIG3+SII)/G1I
 	    Q(3) = -X2*FI*DLOG(R3)/(X3*G1I)
 	    Q(4) = -X2*FO*DLOG(R4)/(X3*G1O)
 	    Q(5) = (-X2*FO*(DLOG(R4)+G3O)/X3+CO*G2O*SIG4+SO)/G1O
@@ -477,10 +477,10 @@ C  Calculate stresses, strains, and displacement of order i+1
 	      R = (J-1)*(R3-R2)/FLOAT(NDIVI+1) + R2
 	      SIGINTER = SIGIR(J)
 	      SIGIR(J) = G1I*A(I+1) - X2*G2I*B(I+1)*(R**(-3.0)) + X2*FI*
-     A               (DLOG(R)+G3I)/X3 - CI*G2I*((X1+L3I*G1I*V1I)*
-     B               SIGIR(J)+(L1I*G1I*V1I-X1)*SIGIT(J))/(I+1.0)- SI
+     A               (DLOG(R)+G3I)/X3 - CII*G2I*((X1+L3I*G1I*V1I)*
+     B               SIGIR(J)+(L1I*G1I*V1I-X1)*SIGIT(J))/(I+1.0)- SII
 	      SIGIT(J) = SIGIR(J) + X3*G2I*B(I+1)*(R**(-3.0)) - X2*FI*
-     A               G2I/(X3*G1I) + X3*CI*G2I*V2I*(SIGINTER-SIGIT(J))/
+     A               G2I/(X3*G1I) + X3*CII*G2I*V2I*(SIGINTER-SIGIT(J))/
      B               (X2*(I+1.0)) + SI1
 	      EPIIR(J) = A(I+1) - X2*B(I+1)*(R**(-3.0)) + 
      A	  			  X2*(L4I-L3I)*FI*(DLOG(R)+X1)/X3
@@ -576,17 +576,17 @@ C
 C  Update stress entries for higher orders
           SIGINTER = SIGR2
           SIGR2 = G1I*A(I+1) - X2*G2I*B(I+1)*(R2**(-3.0)) + X2*FI*
-     A           (DLOG(R2)+G3I)/X3 - CI*G2I*((X1+L3I*G1I*V1I)*SIGR2 +
-     B           (L1I*G1I*V1I-X1)*SIGT2)/(I+1.0) - SI
+     A           (DLOG(R2)+G3I)/X3 - CII*G2I*((X1+L3I*G1I*V1I)*SIGR2 +
+     B           (L1I*G1I*V1I-X1)*SIGT2)/(I+1.0) - SII
           SIGT2 = SIGR2 + X3*G2I*B(I+1)*(R2**(-3.0)) - X2*FI*
-     A           G2I/(X3*G1I) + X3*CI*G2I*V2I*(SIGINTER-SIGT2)/
+     A           G2I/(X3*G1I) + X3*CII*G2I*V2I*(SIGINTER-SIGT2)/
      B           (X2*(I+1.0)) + SI1
           SIGINTER = SIGR3
           SIGR3 = G1I*A(I+1) - X2*G2I*B(I+1)*(R3**(-3.0)) + X2*FI*
-     A           (DLOG(R3)+G3I)/X3 - CI*G2I*((X1+L3I*G1I*V1I)*SIGR3 +
-     B           (L1I*G1I*V1I-X1)*SIGT3)/(I+1.0) - SI
+     A           (DLOG(R3)+G3I)/X3 - CII*G2I*((X1+L3I*G1I*V1I)*SIGR3 +
+     B           (L1I*G1I*V1I-X1)*SIGT3)/(I+1.0) - SII
           SIGT3 = SIGR3 + X3*G2I*B(I+1)*(R3**(-3.0)) - X2*FI*
-     A           G2I/(X3*G1I) + X3*CI*G2I*V2I*(SIGINTER-SIGT3)/
+     A           G2I/(X3*G1I) + X3*CII*G2I*V2I*(SIGINTER-SIGT3)/
      B           (X2*(I+1.0)) + SI1
 	    SIGINTER = SIGR4
 	    SIGR4 = G1O*M(I+1) - X2*G2O*N(I+1)*(R4**(-3.0)) + X2*FO*
@@ -767,7 +767,7 @@ C  Prepare fluence, pressure and creep quantities
 C    Stresses are additive; boundary conditions should exclude residual stresses
         PI = -PRESS-SIGR(1)
 	  PO = -PAMB-SIGR(NDIVI+NDIVS+4)
-	  CI = IPYCREEP
+	  CII = IPYCREEP
 C
 C  Initialize arrays P and Q
         DO 2908 I=1,NDIM2
@@ -887,22 +887,22 @@ C
 	    FLUI = FLUI*FLU
 C
           IF (I .LE. NDEG) THEN
-	      SI = (L4I*ISWR(I)+L2I*ISWT(I))/((I+1.0)*(L1I*L4I-L2I*L3I))
+	      SII = (L4I*ISWR(I)+L2I*ISWT(I))/((I+1.0)*(L1I*L4I-L2I*L3I))
 	      SI1 = G2I*(ISWR(I)-ISWT(I))/(I+1.0)
-	      FI = (-CI)*V3I*GI/(X2*L4I*(I+1.0))+(ISWR(I)-ISWT(I))/
+	      FI = (-CII)*V3I*GI/(X2*L4I*(I+1.0))+(ISWR(I)-ISWT(I))/
      &           (L4I*(I+1.0))
-	      GI = FI - CI*G1I*V1I*GI/(I+1.0)
+	      GI = FI - CII*G1I*V1I*GI/(I+1.0)
 	    ELSE
-	      SI = 0.0
+	      SII = 0.0
 	      SI1 = 0.0
-	      FI = (-CI)*V3I*GI/(X2*L4I*(I+1.0))
-	      GI = FI - CI*G1I*V1I*GI/(I+1.0)
+	      FI = (-CII)*V3I*GI/(X2*L4I*(I+1.0))
+	      GI = FI - CII*G1I*V1I*GI/(I+1.0)
 	    END IF
 C
 C  Calculate A(I+1), B(I+1), D(I+1), F(I+1)
 C    Step 1: Assign new values to Q(NDIM2)
-	    Q(1) = (-X2*FI*(DLOG(R2)+G3I)/X3+CI*G2I*SIG2+SI)/G1I
-	    Q(2) = (-X2*FI*(DLOG(R3)+G3I)/X3+CI*G2I*SIG3+SI)/G1I
+	    Q(1) = (-X2*FI*(DLOG(R2)+G3I)/X3+CII*G2I*SIG2+SII)/G1I
+	    Q(2) = (-X2*FI*(DLOG(R3)+G3I)/X3+CII*G2I*SIG3+SII)/G1I
 	    Q(3) = -X2*FI*DLOG(R3)/(X3*G1I)
 	    Q(4) = 0.0D0
 C    Step 2: Use DLSARG of IMSL library to calculate X
@@ -918,10 +918,10 @@ C  Calculate stresses, strains, and displacement of order i+1
 	      R = (J-1)*(R3-R2)/FLOAT(NDIVI+1) + R2
 	      SIGINTER = SIGIR(J)
 	      SIGIR(J) = G1I*A(I+1) - X2*G2I*B(I+1)*(R**(-3.0)) + X2*FI*
-     A               (DLOG(R)+G3I)/X3 - CI*G2I*((X1+L3I*G1I*V1I)*
-     B               SIGIR(J)+(L1I*G1I*V1I-X1)*SIGIT(J))/(I+1.0)- SI
+     A               (DLOG(R)+G3I)/X3 - CII*G2I*((X1+L3I*G1I*V1I)*
+     B               SIGIR(J)+(L1I*G1I*V1I-X1)*SIGIT(J))/(I+1.0)- SII
 	      SIGIT(J) = SIGIR(J) + X3*G2I*B(I+1)*(R**(-3.0)) - X2*FI*
-     A               G2I/(X3*G1I) + X3*CI*G2I*V2I*(SIGINTER-SIGIT(J))/
+     A               G2I/(X3*G1I) + X3*CII*G2I*V2I*(SIGINTER-SIGIT(J))/
      B               (X2*(I+1.0)) + SI1
 	      EPIIR(J) = A(I+1) - X2*B(I+1)*(R**(-3.0)) + 
      A	  			  X2*(L4I-L3I)*FI*(DLOG(R)+X1)/X3
@@ -999,17 +999,17 @@ C
 C  Update stress entries for higher orders
           SIGINTER = SIGR2
           SIGR2 = G1I*A(I+1) - X2*G2I*B(I+1)*(R2**(-3.0)) + X2*FI*
-     A           (DLOG(R2)+G3I)/X3 - CI*G2I*((X1+L3I*G1I*V1I)*SIGR2 +
-     B           (L1I*G1I*V1I-X1)*SIGT2)/(I+1.0) - SI
+     A           (DLOG(R2)+G3I)/X3 - CII*G2I*((X1+L3I*G1I*V1I)*SIGR2 +
+     B           (L1I*G1I*V1I-X1)*SIGT2)/(I+1.0) - SII
           SIGT2 = SIGR2 + X3*G2I*B(I+1)*(R2**(-3.0)) - X2*FI*
-     A           G2I/(X3*G1I) + X3*CI*G2I*V2I*(SIGINTER-SIGT2)/
+     A           G2I/(X3*G1I) + X3*CII*G2I*V2I*(SIGINTER-SIGT2)/
      B           (X2*(I+1.0)) + SI1
           SIGINTER = SIGR3
           SIGR3 = G1I*A(I+1) - X2*G2I*B(I+1)*(R3**(-3.0)) + X2*FI*
-     A           (DLOG(R3)+G3I)/X3 - CI*G2I*((X1+L3I*G1I*V1I)*SIGR3 +
-     B           (L1I*G1I*V1I-X1)*SIGT3)/(I+1.0) - SI
+     A           (DLOG(R3)+G3I)/X3 - CII*G2I*((X1+L3I*G1I*V1I)*SIGR3 +
+     B           (L1I*G1I*V1I-X1)*SIGT3)/(I+1.0) - SII
           SIGT3 = SIGR3 + X3*G2I*B(I+1)*(R3**(-3.0)) - X2*FI*
-     A           G2I/(X3*G1I) + X3*CI*G2I*V2I*(SIGINTER-SIGT3)/
+     A           G2I/(X3*G1I) + X3*CII*G2I*V2I*(SIGINTER-SIGT3)/
      B           (X2*(I+1.0)) + SI1
 	    SIG2 = ((X1+L3I*G1I*V1I)*SIGR2+(L1I*G1I*V1I-X1)*SIGT2)/(I+2.0)
 	    SIG3 = ((X1+L3I*G1I*V1I)*SIGR3+(L1I*G1I*V1I-X1)*SIGT3)/(I+2.0)
