@@ -1,4 +1,3 @@
-C
 C***********************************************************************
 C                                                                      *
 C  Subroutine M_ANALYSIS(MCODE,PRESS,PAMB,FLU,SIGR,SIGT,EPIR,EPIT,UR)  *
@@ -154,7 +153,7 @@ C***********************************************************************
 C                                                                      *
 	SUBROUTINE M_ANALYSIS(MCODE,PRESS,PAMB,FLU,SIGR,SIGT,EPIR,EPIT,UR)
 C
-      USE IMSLF90          ! Allow usage of IMSL libraries
+      USE IMSL_LIBRARIES          ! Allow usage of IMSL libraries
 	PARAMETER ( NDIV = 30, IORDER = 200 )
       PARAMETER ( NDEG = 3)
 	PARAMETER ( IPATH = 1, LDA = 6, NDIM = 6, NDIM2 = 4)

@@ -572,8 +572,10 @@ C                                                                       *
 C  Main program starts
 C
       PROGRAM TIMCOAT
+      INCLUDE 'link_fnl_static.h'
+      !DEC$ OBJCOMMENT LIB:'libiomp5md.lib'
 
-      USE IMSLF90          ! Allow usage of IMSL math and statistics libraries
+      USE IMSL_LIBRARIES ! Use IMSL math and statistics libraries
 C
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
