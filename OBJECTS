@@ -1,0 +1,28 @@
+objects = \
+cmfd_execute.o \
+cmfd_header.o \
+constants.o \
+error.o \
+finalize.o \
+geometry_header.o \
+global.o \
+hdf5_interface.o \
+initialize.o \
+input_xml.o \
+jacobian_operator.o \
+kinetics_header.o \
+kinetics_operator.o \
+kinetics_solver.o \
+loss_operator.o \
+main.o \
+material_header.o \
+math.o \
+operator_header.o \
+output.o \
+power_iter.o \
+power_solver.o \
+prod_operator.o \
+slepc_solver.o \
+snes_solver.o \
+string.o \
+timing.o

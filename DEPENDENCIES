@@ -1,0 +1,102 @@
+cmfd_execute.o: power_iter.o
+cmfd_execute.o: power_solver.o
+cmfd_execute.o: kinetics_solver.o
+cmfd_execute.o: math.o
+cmfd_execute.o: output.o
+cmfd_execute.o: slepc_solver.o
+cmfd_execute.o: snes_solver.o
+
+cmfd_header.o: geometry_header.o
+cmfd_header.o: material_header.o
+
+error.o: global.o
+
+finalize.o: cmfd_header.o
+finalize.o: geometry_header.o
+finalize.o: global.o
+finalize.o: hdf5_interface.o
+finalize.o: material_header.o
+finalize.o: output.o
+finalize.o: timing.o
+
+global.o: cmfd_header.o
+global.o: geometry_header.o
+global.o: kinetics_header.o
+global.o: material_header.o
+global.o: operator_header.o
+global.o: timing.o
+
+initialize.o: cmfd_header.o
+initialize.o: geometry_header.o
+initialize.o: global.o
+initialize.o: hdf5_interface.o
+initialize.o: input_xml.o
+initialize.o: material_header.o
+initialize.o: output.o
+initialize.o: timing.o
+
+input_xml.o: constants.o
+input_xml.o: error.o
+input_xml.o: global.o
+input_xml.o: kinetics_header.o
+input_xml.o: material_header.o
+input_xml.o: output.o
+input_xml.o: templates/input_t.o 
+
+jacobian_operator.o: loss_operator.o
+jacobian_operator.o: prod_operator.o
+
+kinetics_operator.o: global.o
+kinetics_operator.o: material_header.o
+kinetics_operator.o: math.o
+
+kinetics_solver.o: cmfd_header.o
+kinetics_solver.o: constants.o
+kinetics_solver.o: error.o
+kinetics_solver.o: global.o
+kinetics_solver.o: kinetics_header.o
+kinetics_solver.o: kinetics_operator.o
+kinetics_solver.o: material_header.o
+kinetics_solver.o: math.o
+
+loss_operator.o: global.o
+loss_operator.o: material_header.o
+loss_operator.o: math.o
+
+main.o: cmfd_execute.o
+main.o: finalize.o
+main.o: timing.o
+
+material_header.o: constants.o
+
+output.o: constants.o
+output.o: global.o
+output.o: hdf5_interface.o
+output.o: string.o
+
+power_iter.o: constants.o
+power_iter.o: error.o
+power_iter.o: loss_operator.o
+power_iter.o: math.o
+power_iter.o: prod_operator.o
+power_iter.o: timing.o
+
+power_solver.o: loss_operator.o
+power_solver.o: prod_operator.o
+
+prod_operator.o: global.o
+prod_operator.o: material_header.o
+
+slepc_solver.o: loss_operator.o
+slepc_solver.o: prod_operator.o
+
+snes_solver.o: jacobian_operator.o
+snes_solver.o: loss_operator.o
+snes_solver.o: prod_operator.o
+snes_solver.o: slepc_solver.o
+
+string.o: constants.o
+string.o: error.o
+string.o: global.o
+
+timing.o: constants.o
