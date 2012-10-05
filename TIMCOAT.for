@@ -3877,180 +3877,180 @@ C***********************************************************************
 C
 C
 C
-C***********************************************************************
-C                                                                      *
-C  Subroutine CURRENTTIME                                              *
-C                                                                      *
-C     Get the current time hour:minutes:seconds                        *
-C                                                                      *
-C  It is assumed that the common block TYPE has been initialized by    *
-C  calling subroutine MACHINE.                                         *
-C                                                                      *
-C  Notation                                                            *
-C    D               : REAL*8 (Double Precision)                       *
-C    I               : INTEGER                                         *
-C    L               : LOGICAL                                         *
-C    C               : CHARACTER*n                                     *
-C                                                                      *
-C  Actual argument description                                         *
-C    CTIME          C: Time format HH:MM:SS                            *
-C                                                                      *
-C  Common blocks:                                                      *
-C  /MTYPE/                                                             *
-C                                                                      *
-C  Description of variables                                            *
-C    CTIME2         C: Time format HH:MM:SS.SS                         *
-C    COMP           C: Three character description of compiler type    *
-C    C1             I: Numerical constant, 2 (2^31 - 1) = 4 294 967 294*
-C    C2             I: Numerical constant, 86400, number of seconds    *
-C                      in a day                                        *
-C    IERR           I: Logical Unit Number of error file 'ERROR.MSG'   *
-C    MACH           C: Three character description of computer type    *
-C    NHOUR          I: Current time in hours                           *
-C    NMIN           I: Current time in minutes                         *
-C    NSEC           I: Current time in seconds                         *
-C    NTIME          I: Reference time in seconds                       *
-C    PERIOD         D: Processed reference time                        *
-C                                                                      *
-C  None-standard features:                                             *
-C    LONG            : 32 bit absolute memory addressing function for  *
-C                      Macintosh computers.  The memory address 524    *
-C                      (decimal) has the time in seconds since midnight*
-C                       January 1, 1904. LONG is an INTEGER function.  *
-C                                                                      *
-C    TIME()          : On the DEC workstations with DEC Ultrix Fortran,*
-C                      the call to TIME returns the time in seconds    *
-C                      since midnight January 1, 1970.  TIME is an     *
-C                      INTEGER function.                               *
-C                                                                      *
-C    TIME()          : On the IBM, TIME returns the time in the format *
-C                      Hour:Minute:Second:Hundredth of a Second. Time  *
-C                      is a CHARACTER function.                        *
-C                                                                      *
-C  Functions and subroutines called:                                   *
-C    ERR_HANDLER     : Processes an error (diagnostic) message.        *
-C                                                                      *
-C  Intrinsic functions called:                                         *
-C    CHAR                                                              *
-C    DBLE                                                              *
-C    ICHAR                                                             *
-C    IDINT                                                             *
-C    MOD                                                               *
-C                                                                      *
-C***********************************************************************
-C
-C***********************************************************************
-C                                                                      *
-      SUBROUTINE CURRENTTIME (CTIME)
-C
-      DOUBLE PRECISION PERIOD, C1, C2
-      INTEGER NTIME, NHOUR, NMIN, NSEC, IERR
-C
-C  On the DEC workstations with DEC Ultrix Fortran, the call to TIME
-C  returns the time in seconds since midnight January 1, 1970
-C  Greenwich Meridian Time (GMT).  The function TIME must be declared
-C  INTEGER.
-C
-C#######################################################################
-CDEC	INTEGER TIME
-C#######################################################################
-      CHARACTER*8 CTIME
-      CHARACTER*11 CTIME2
-      CHARACTER*3 MACH, COMP
-C
-      COMMON /MTYPE/MACH, COMP
-C
-      PARAMETER (IERR = 12)
-C
-C  Set CTIME2 to blanks to avoid compiler warnings
-      DATA CTIME2/'           '/
-C
-C  Set to zero to avoid compiler warnings
-      DATA NTIME/0/
-C
-C  Define numerical constants
-C  2 (2^31 - 1)
-      DATA C1/4 294 967 294.0 D+00/
-      DATA C2/86400.0 D+00/     ! Seconds in day
-C
-C  Machine dependent calculations
-C
-      IF ((MACH .EQ. 'MAC') .OR. (MACH .EQ. 'DEC')) THEN
-C
-C  Generic to all Macintosh compilers
-C
-C  The memory address 524 (decimal) has the time in seconds since
-C  midnight January 1, 1904.
-C
-C#######################################################################
-CMAC      IF (MACH .EQ. 'MAC') NTIME = LONG(524)
-C#######################################################################
-C
-C  On the DEC workstations with DEC Ultrix Fortran, the call to TIME
-C  returns the time in seconds since midnight January 1, 1970.
-C
-C#######################################################################
-CDEC      IF (MACH .EQ. 'DEC') NTIME = TIME()
-C#######################################################################
-C
-C  The number of seconds returned are in the range - 2^31 -> 2^31 - 1
-C  Negative values are used to extend the range of the system clocks.
-C  If a negative value for time is returned 2*(2^31 - 1) must be added
-C  to get the correct time.  This would cause INTEGER*4 overflow.
-C  To prevent this, the time is converted to double precision, then
-C  scaled to the number of days.
-C  
-        IF (NTIME .GE. 0) THEN
-          PERIOD = DBLE(NTIME)
-        ELSE
-          PERIOD = C1 + DBLE(NTIME)
-        END IF
-C
-C  Remaining fraction of day in seconds
-C
-        NTIME = IDINT(C2*(PERIOD/C2 - DBLE(IDINT(PERIOD/C2))))
-        NHOUR = NTIME/3600
-        NMIN = MOD(NTIME,3600)/60
-        NSEC = MOD(NTIME,3600) - 60*NMIN
-      ELSE IF (MACH .EQ. 'IBM') THEN
-C
-C  Only for IBM compilers
-C
-C  IBM routine TIME returns the time in the format
-C  'Hour:Minute:Second '
-        CALL TIME(CTIME2)
-        NHOUR = 10*(ICHAR(CTIME2(1:1)) - 48) + ICHAR(CTIME2(2:2)) - 48
-        NMIN = 10*(ICHAR(CTIME2(4:4)) - 48) + ICHAR(CTIME2(5:5)) -48
-        NSEC = 10*(ICHAR(CTIME2(7:7)) - 48) + ICHAR(CTIME2(8:8)) - 48
-      ELSE
-        CALL ERR_HANDLER('SUBROUTINE CURRENTTIME: unsupported 
-     &					machine type', 42, 2, 2, IERR)
-      END IF
-C
-C  Express time in HH:MM:SS form
-C
-C  ASCII number for 0 is 48, ... ASCII number for 9 is 57
-C
-C  Tens of hours
-      CTIME(1:1) = CHAR(48 + NHOUR/10) 
-C  Single hours
-      CTIME(2:2) = CHAR(48 + MOD(NHOUR,10))
-C  Break
-      CTIME(3:3) = ':' 
-C  Tens of minutes
-      CTIME(4:4) = CHAR(48 + NMIN/10)
-C  Single minutes
-      CTIME(5:5) = CHAR(48 + MOD(NMIN,10)) 
-C  Break
-      CTIME(6:6) = ':'  
-C  Tens of seconds
-      CTIME(7:7) = CHAR(48 + NSEC/10)
-C  Single seconds
-      CTIME(8:8) = CHAR(48 + MOD(NSEC,10)) 
-      RETURN
-      END
-C                                                                      *
-C***********************************************************************
+!C***********************************************************************
+!C                                                                      *
+!C  Subroutine CURRENTTIME                                              *
+!C                                                                      *
+!C     Get the current time hour:minutes:seconds                        *
+!C                                                                      *
+!C  It is assumed that the common block TYPE has been initialized by    *
+!C  calling subroutine MACHINE.                                         *
+!C                                                                      *
+!C  Notation                                                            *
+!C    D               : REAL*8 (Double Precision)                       *
+!C    I               : INTEGER                                         *
+!C    L               : LOGICAL                                         *
+!C    C               : CHARACTER*n                                     *
+!C                                                                      *
+!C  Actual argument description                                         *
+!C    CTIME          C: Time format HH:MM:SS                            *
+!C                                                                      *
+!C  Common blocks:                                                      *
+!C  /MTYPE/                                                             *
+!C                                                                      *
+!C  Description of variables                                            *
+!C    CTIME2         C: Time format HH:MM:SS.SS                         *
+!C    COMP           C: Three character description of compiler type    *
+!C    C1             I: Numerical constant, 2 (2^31 - 1) = 4 294 967 294*
+!C    C2             I: Numerical constant, 86400, number of seconds    *
+!C                      in a day                                        *
+!C    IERR           I: Logical Unit Number of error file 'ERROR.MSG'   *
+!C    MACH           C: Three character description of computer type    *
+!C    NHOUR          I: Current time in hours                           *
+!C    NMIN           I: Current time in minutes                         *
+!C    NSEC           I: Current time in seconds                         *
+!C    NTIME          I: Reference time in seconds                       *
+!C    PERIOD         D: Processed reference time                        *
+!C                                                                      *
+!C  None-standard features:                                             *
+!C    LONG            : 32 bit absolute memory addressing function for  *
+!C                      Macintosh computers.  The memory address 524    *
+!C                      (decimal) has the time in seconds since midnight*
+!C                       January 1, 1904. LONG is an INTEGER function.  *
+!C                                                                      *
+!C    TIME()          : On the DEC workstations with DEC Ultrix Fortran,*
+!C                      the call to TIME returns the time in seconds    *
+!C                      since midnight January 1, 1970.  TIME is an     *
+!C                      INTEGER function.                               *
+!C                                                                      *
+!C    TIME()          : On the IBM, TIME returns the time in the format *
+!C                      Hour:Minute:Second:Hundredth of a Second. Time  *
+!C                      is a CHARACTER function.                        *
+!C                                                                      *
+!C  Functions and subroutines called:                                   *
+!C    ERR_HANDLER     : Processes an error (diagnostic) message.        *
+!C                                                                      *
+!C  Intrinsic functions called:                                         *
+!C    CHAR                                                              *
+!C    DBLE                                                              *
+!C    ICHAR                                                             *
+!C    IDINT                                                             *
+!C    MOD                                                               *
+!C                                                                      *
+!C***********************************************************************
+!C
+!C***********************************************************************
+!C                                                                      *
+!      SUBROUTINE CURRENTTIME (CTIME)
+!C
+!      DOUBLE PRECISION PERIOD, C1, C2
+!      INTEGER NTIME, NHOUR, NMIN, NSEC, IERR
+!C
+!C  On the DEC workstations with DEC Ultrix Fortran, the call to TIME
+!C  returns the time in seconds since midnight January 1, 1970
+!C  Greenwich Meridian Time (GMT).  The function TIME must be declared
+!C  INTEGER.
+!C
+!C#######################################################################
+!CDEC	INTEGER TIME
+!C#######################################################################
+!      CHARACTER*8 CTIME
+!      CHARACTER*11 CTIME2
+!      CHARACTER*3 MACH, COMP
+!C
+!      COMMON /MTYPE/MACH, COMP
+!C
+!      PARAMETER (IERR = 12)
+!C
+!C  Set CTIME2 to blanks to avoid compiler warnings
+!      DATA CTIME2/'           '/
+!C
+!C  Set to zero to avoid compiler warnings
+!      DATA NTIME/0/
+!C
+!C  Define numerical constants
+!C  2 (2^31 - 1)
+!      DATA C1/4 294 967 294.0 D+00/
+!      DATA C2/86400.0 D+00/     ! Seconds in day
+!C
+!C  Machine dependent calculations
+!C
+!      IF ((MACH .EQ. 'MAC') .OR. (MACH .EQ. 'DEC')) THEN
+!C
+!C  Generic to all Macintosh compilers
+!C
+!C  The memory address 524 (decimal) has the time in seconds since
+!C  midnight January 1, 1904.
+!C
+!C#######################################################################
+!CMAC      IF (MACH .EQ. 'MAC') NTIME = LONG(524)
+!C#######################################################################
+!C
+!C  On the DEC workstations with DEC Ultrix Fortran, the call to TIME
+!C  returns the time in seconds since midnight January 1, 1970.
+!C
+!C#######################################################################
+!CDEC      IF (MACH .EQ. 'DEC') NTIME = TIME()
+!C#######################################################################
+!C
+!C  The number of seconds returned are in the range - 2^31 -> 2^31 - 1
+!C  Negative values are used to extend the range of the system clocks.
+!C  If a negative value for time is returned 2*(2^31 - 1) must be added
+!C  to get the correct time.  This would cause INTEGER*4 overflow.
+!C  To prevent this, the time is converted to double precision, then
+!C  scaled to the number of days.
+!C  
+!        IF (NTIME .GE. 0) THEN
+!          PERIOD = DBLE(NTIME)
+!        ELSE
+!          PERIOD = C1 + DBLE(NTIME)
+!        END IF
+!C
+!C  Remaining fraction of day in seconds
+!C
+!        NTIME = IDINT(C2*(PERIOD/C2 - DBLE(IDINT(PERIOD/C2))))
+!        NHOUR = NTIME/3600
+!        NMIN = MOD(NTIME,3600)/60
+!        NSEC = MOD(NTIME,3600) - 60*NMIN
+!      ELSE IF (MACH .EQ. 'IBM') THEN
+!C
+!C  Only for IBM compilers
+!C
+!C  IBM routine TIME returns the time in the format
+!C  'Hour:Minute:Second '
+!        CALL TIME(CTIME2)
+!        NHOUR = 10*(ICHAR(CTIME2(1:1)) - 48) + ICHAR(CTIME2(2:2)) - 48
+!        NMIN = 10*(ICHAR(CTIME2(4:4)) - 48) + ICHAR(CTIME2(5:5)) -48
+!        NSEC = 10*(ICHAR(CTIME2(7:7)) - 48) + ICHAR(CTIME2(8:8)) - 48
+!      ELSE
+!        CALL ERR_HANDLER('SUBROUTINE CURRENTTIME: unsupported 
+!     &					machine type', 42, 2, 2, IERR)
+!      END IF
+!C
+!C  Express time in HH:MM:SS form
+!C
+!C  ASCII number for 0 is 48, ... ASCII number for 9 is 57
+!C
+!C  Tens of hours
+!      CTIME(1:1) = CHAR(48 + NHOUR/10) 
+!C  Single hours
+!      CTIME(2:2) = CHAR(48 + MOD(NHOUR,10))
+!C  Break
+!      CTIME(3:3) = ':' 
+!C  Tens of minutes
+!      CTIME(4:4) = CHAR(48 + NMIN/10)
+!C  Single minutes
+!      CTIME(5:5) = CHAR(48 + MOD(NMIN,10)) 
+!C  Break
+!      CTIME(6:6) = ':'  
+!C  Tens of seconds
+!      CTIME(7:7) = CHAR(48 + NSEC/10)
+!C  Single seconds
+!      CTIME(8:8) = CHAR(48 + MOD(NSEC,10)) 
+!      RETURN
+!      END
+!C                                                                      *
+!C***********************************************************************
 C
 C
 C
