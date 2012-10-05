@@ -1014,7 +1014,7 @@ C  positive integer value.  This positive IOSTAT is a message.
 C     
       READ(UNIT = IDAT1, NML = INPUT, IOSTAT=IMSG)
 	IF (IMSG .NE. 0) THEN
-        CALL ERR_HANDLER('Main: IOSTAT error from input file',
+        CALL ERR_HANDLER(TRIM('Main: IOSTAT error from input file'),
      &					34,IMSG,2,IERR)
 	END IF
 C
@@ -1026,7 +1026,7 @@ C  Initialize random number generator with ISEED
 C
       IF (ISEED .EQ. 0) THEN
 	  CALL ERR_HANDLER (
-     A 	'MAIN: RNG seed, ISEED = 0, using default seed 305',
+     A 	TRIM('MAIN: RNG seed, ISEED = 0, using default seed 305'),
      B     50, 1, 1, IERR)
         ISEED = 305
 	END IF
@@ -3867,7 +3867,7 @@ C  Read in data
  2220   CONTINUE
         CLOSE (UNIT = IDAT, STATUS = 'KEEP')
 	ELSE
-	  CALL ERR_HANDLER('COREMODEL not specified when calling CORE',
+	  CALL ERR_HANDLER(TRIM('COREMODEL not specified when calling CORE'),
      &			  45,2,2,IERR)
 	END IF
 	RETURN
@@ -4701,8 +4701,8 @@ C  Calculate the streamline of pebble
 2420    CONTINUE
         ENTRANCE = R
 	ELSE
-	  CALL ERR_HANDLER('COREMODEL not specified when calling 
-     &					FEEDPEBBLE', 45,2,2,IERR)
+	  CALL ERR_HANDLER(TRIM('COREMODEL not specified when calling 
+     &					FEEDPEBBLE'), 45,2,2,IERR)
 	END IF
 	RETURN
 	END
@@ -6706,8 +6706,8 @@ C#######################################################################
 C
         TIMEON = FLOAT(86400*NDAY) + DTIME2
       ELSE
-        CALL ERR_HANDLER('FUNCTION TIMEON: unsupported machine type',
-     &              41, 2, 2, IERR)
+        CALL ERR_HANDLER(TRIM('FUNCTION TIMEON: unsupported machine type
+     &              '), 41, 2, 2, IERR)
       END IF
       RETURN
       END
