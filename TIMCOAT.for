@@ -835,7 +835,7 @@ C  Functions declared EXTERNAL
 	EXTERNAL BAFI_PYC
 	EXTERNAL E_PYC
       EXTERNAL E_SIC
-      EXTERNAL ELAPTIME
+      !EXTERNAL ELAPTIME
 	EXTERNAL FLUX
       EXTERNAL GAUSSIAN
       EXTERNAL INITSEED
@@ -1174,11 +1174,11 @@ C  Open an output file for parametric study
 	  SIGMSICM = 0.0D0
 	END IF
 C
-C  Initialize date and time routines
-      CALL CURRENTDATE (CDATE)
-      CALL CURRENTTIME (CTIME)
-      TIME0 = ELAPTIME(0.0D0)      ! Starting wall clock time for this run
-	MACHTIME = 0.0D0
+!C  Initialize date and time routines
+!      CALL CURRENTDATE (CDATE)
+!      CALL CURRENTTIME (CTIME)
+!      TIME0 = ELAPTIME(0.0D0)      ! Starting wall clock time for this run
+!	MACHTIME = 0.0D0
 C
 C  Write headers to terminal
       WRITE(ITERM,601)
@@ -3275,7 +3275,7 @@ C***********************************************************************
 C  Send to the terminal intermediate results per NBURP of particles. 
 C  NCASES of particles are divided into groups NBURP particles for statistical purpose.
 990   IF (MOD(N,NBURP) .EQ. 0) THEN
-        TIME = ELAPTIME(TIME0)
+        TIME = 0.0
         WRITE(ITERM,605) N, TIME, PARFAIL, SICFAIL, IPYCFAIL, OPYCFAIL
         WRITE(IOUT,605) N, TIME, PARFAIL, SICFAIL, IPYCFAIL, OPYCFAIL
 C  Gain statistical information on layer/particle failures every group of NBURP particles
@@ -3490,7 +3490,7 @@ C  Write the debug file various info. after the calculation
 		WRITE(IDBG, *) 'End of debug file.'
 	END IF
 C
-      TIME = ELAPTIME(TIME0)
+      TIME = 0
 	MACHTIME = TIME
 	WRITE(ITERM,*)
 	IF (TIME .LT. 60.0) THEN
@@ -3531,8 +3531,8 @@ C
      A                FLOAT(NCASES)/MAX(TIME, 1.0 D0)
 	WRITE(IOUT,*)
 C
-      CALL CURRENTDATE (CDATE)
-      CALL CURRENTTIME (CTIME)
+      !CALL CURRENTDATE (CDATE)
+      !CALL CURRENTTIME (CTIME)
 	WRITE(IOUT,638) 'Sample maximum tangential stress in IPyC',
      &				SIGXBARI,'+/-',SIGXVARI
 	WRITE(IOUT,638) 'Sample maximum tangential stress in SiC ',
@@ -5965,35 +5965,35 @@ C
 C
 C***********************************************************************
 C                                                                      *
-C  Function ELAPTIME                                                   *
-C                                                                      *
-C    Elapsed time since T0 in seconds                                  *
-C                                                                      *
-C  Notation                                                            *
-C    D               : REAL*8 (Double Precision)                       *
-C    I               : INTEGER                                         *
-C    L               : LOGICAL                                         *
-C    C               : CHARACTER*n                                     *
-C                                                                      *
-C  Actual variable description                                         *
-C    T0 (sec)       D: Reference time                                  *
-C    ELAPTIME (sec) D: Elapsed time since T0                           *
-C                                                                      *
-C  Functions and subroutines called                                    *
-C    TIMEON          : Time in seconds that the machine has been on    *
-C                      or since midnight depending on machine type.    *
-C***********************************************************************
-C
-C***********************************************************************
-C                                                                      *
-      FUNCTION ELAPTIME (T0)
-      DOUBLE PRECISION ELAPTIME, TIMEON, T0
-
-      EXTERNAL TIMEON
-
-      ELAPTIME = TIMEON(T0) - T0
-      RETURN
-      END
+!C  Function ELAPTIME                                                   *
+!C                                                                      *
+!C    Elapsed time since T0 in seconds                                  *
+!C                                                                      *
+!C  Notation                                                            *
+!C    D               : REAL*8 (Double Precision)                       *
+!C    I               : INTEGER                                         *
+!C    L               : LOGICAL                                         *
+!C    C               : CHARACTER*n                                     *
+!C                                                                      *
+!C  Actual variable description                                         *
+!C    T0 (sec)       D: Reference time                                  *
+!C    ELAPTIME (sec) D: Elapsed time since T0                           *
+!C                                                                      *
+!C  Functions and subroutines called                                    *
+!C    TIMEON          : Time in seconds that the machine has been on    *
+!C                      or since midnight depending on machine type.    *
+!C***********************************************************************
+!C
+!C***********************************************************************
+!C                                                                      *
+!      FUNCTION ELAPTIME (T0)
+!      DOUBLE PRECISION ELAPTIME, TIMEON, T0
+!
+!      EXTERNAL TIMEON
+!
+!      ELAPTIME = TIMEON(T0) - T0
+!      RETURN
+!      END
 C                                                                      *
 C***********************************************************************
 C
@@ -6563,154 +6563,154 @@ C
 C
 C***********************************************************************
 C                                                                      *
-C  Function TIMEON (TIME)                                              *
-C                                                                      *
-C    The function TIMEON returns the number of seconds elapse since    *
-C  the machine were turned on.  The starting reference point is        *
-C  arbitrary.  On Macintosh machines the starting point is since the   *
-C  machine was turned on.  For IBM and DEC machines the starting point *
-C  is the time since midnight.  Date changes are tracked for run times *
-C  that run through midnight.  The TIMEON function is initialized by   *
-C  setting the argument TIME to 0.0                                    *
-C                                                                      *
-C    It is assumed that the common block TYPE has been initialized by  *
-C  calling subroutine MACHINE.                                         *
-C                                                                      *
-C  Actual variable description                                         *
-C    TIME0 (sec)    D: Used to initialize the calendar for TIMEON      *
-C    TIMEON (sec)   D: Number of seconds elapse since the machine was  *
-C                      turned on, or since midnight.                   *
-C                                                                      *
-C  Local variable description                                          *
-C    CDATE          C: Initialization date                             *
-C    CDATE2         C: Date of most recent call                        *
-C    COMP           C: Three character description of compiler type    *
-C    CTIME          C: Initialization time                             *
-C    DTIME (sec)    D: Number of seconds since midnight of the         *
-C                      initialization date                             *
-C    IERR           I: Logical Unit Number of error file 'ERROR.MSG'  *
-C    MACH           C: Three character description of computer type    *
-C    NDAY           I: Number of elapsed days since initialization call*
-C    TADJ (sec)     D: Correction to TIMEON that accounts for date     *
-C                      changes                                         *
-C                                                                      *
-C  None-standard features                                              *
-C    LONG            : 32 bit absolute memory addressing function for  *
-C                      Macintosh computers.  The memory address 362    *
-C                      (decimal) has the number of 'tics',             *
-C                      (60 tics = 1 second), elapse since the machine  *
-C                      was turned on.  LONG is an INTEGER function.    *
-C                                                                      *
-C    TIMER           : Returns the number of 'tics', (100 tics = 1     *
-C                      second), elapse since midnight on an IBM.       *
-C                      TIMER is an INTEGER function.                   *
-C                                                                      *
-C    SECNDS          : Returns the number of seconds since midnight    *
-C                      on a DEC. SECNDS is a REAL function.            *
-C                                                                      *
-C  Subroutines and functions called                                    *
-C    CURRENTTIME     : Returns the current time in the format HH:MM:SS.*
-C    NDAYS           : Returns the number of elapse days between two   *
-C                      dates.                                          *
-C    CURRENTDATE     : Returns the current date in the format MM/DD/YY.*
-C    ERR_HANDLER     : Processes an error (diagnostic) message.        *
-C                                                                      *
-C  Intrinsic functions                                                 *
-C    FLOAT                                                             *
-C                                                                      *
-C  Common blocks                                                       *
-C    MTYPE                                                             *
-C***********************************************************************
-C
-C***********************************************************************
-C                                                                      *
-      FUNCTION TIMEON (TIME0)
-C
-      DOUBLE PRECISION TIMEON, TIME0, DTIME, DTIME2
-      INTEGER NTICKS, NDAY, NDAYS, IERR
-      CHARACTER*3 MACH, COMP
-      CHARACTER*8 CDATE, CDATE2, CTIME, CTIME2
-C
-      PARAMETER (IERR = 12)
-C
-      COMMON /MTYPE/ MACH, COMP
-C
-      EXTERNAL NDAYS
-C
-      SAVE NDAY, CDATE
-C
-	DATA CDATE2/'        '/
-C  Set to zero to avoid compiler warnings
-C
-      DATA NTICKS/0/
-C
-C  The Dec and IBM timing routines are based on the number of seconds
-C  elapsed since midnight.  Therefore, tracking the number of day changes
-C  is necessary.
-C
-C  Accumulation of elapse days since initialization call
-C
-      IF (TIME0 .EQ. 0.0D0) THEN
-        CALL CURRENTDATE(CDATE)
-	  CALL CURRENTTIME(CTIME)
-        NDAY = 0
-C
-C  Convert to the number of seconds since midnight of the
-C  initialization call.
-C
-	  DTIME = FLOAT(
-     A          3600*(10*ICHAR(CTIME(1:1)) + ICHAR(CTIME(2:2))) +
-     B            60*(10*ICHAR(CTIME(4:4)) + ICHAR(CTIME(5:5))) +
-     C               (10*ICHAR(CTIME(7:7)) + ICHAR(CTIME(8:8))) )
-      TIMEON = DTIME
-      RETURN
-	END IF
-C
-C  Find current date and calulate the number of date changes since
-C  the last call.  Then accumulate the total number of date changes
-C  since the initialization call.
-C
-      CALL CURRENTDATE(CDATE2)
-      CALL CURRENTTIME(CTIME2)
-      NDAY = NDAY + NDAYS(CDATE,CDATE2)
-      CDATE = CDATE2
-	DTIME2 = FLOAT(
-     A         3600*(10*ICHAR(CTIME2(1:1)) + ICHAR(CTIME2(2:2))) +
-     B           60*(10*ICHAR(CTIME2(4:4)) + ICHAR(CTIME2(5:5))) +
-     C              (10*ICHAR(CTIME2(7:7)) + ICHAR(CTIME2(8:8))) )
-C
-C  Machine specific elapse time calculations
-C
-      IF (MACH .EQ. 'MAC') THEN
-C
-C  Generic to all Macintosh compilers
-C
-C  The memory address 362 (decimal) has the time in seconds elapse
-C  since the machine was turned on based on the 60 Hz counter.
-C
-C#######################################################################
-CMAC        NTICKS = LONG(362)
-C#######################################################################
-        TIMEON = FLOAT(NTICKS)/60.0
-      ELSE IF (MACH .EQ. 'DEC') THEN
-C
-C  The function SECONDS returns the number of seconds since midnight.
-C  Account of the number of days for timing periods that are longer
-C  than one day or run through midnight are made.
-C
-        TIMEON = FLOAT(NTICKS)/60.0
-C#######################################################################
-CDEC        TIMEON = SECNDS(0.0) + TADJ
-C#######################################################################
-      ELSE IF (MACH .EQ. 'IBM') THEN
-C
-        TIMEON = FLOAT(86400*NDAY) + DTIME2
-      ELSE
-        CALL ERR_HANDLER(TRIM('FUNCTION TIMEON: unsupported machine type
-     &              '), 41, 2, 2, IERR)
-      END IF
-      RETURN
-      END
+!C  Function TIMEON (TIME)                                              *
+!C                                                                      *
+!C    The function TIMEON returns the number of seconds elapse since    *
+!C  the machine were turned on.  The starting reference point is        *
+!C  arbitrary.  On Macintosh machines the starting point is since the   *
+!C  machine was turned on.  For IBM and DEC machines the starting point *
+!C  is the time since midnight.  Date changes are tracked for run times *
+!C  that run through midnight.  The TIMEON function is initialized by   *
+!C  setting the argument TIME to 0.0                                    *
+!C                                                                      *
+!C    It is assumed that the common block TYPE has been initialized by  *
+!C  calling subroutine MACHINE.                                         *
+!C                                                                      *
+!C  Actual variable description                                         *
+!C    TIME0 (sec)    D: Used to initialize the calendar for TIMEON      *
+!C    TIMEON (sec)   D: Number of seconds elapse since the machine was  *
+!C                      turned on, or since midnight.                   *
+!C                                                                      *
+!C  Local variable description                                          *
+!C    CDATE          C: Initialization date                             *
+!C    CDATE2         C: Date of most recent call                        *
+!C    COMP           C: Three character description of compiler type    *
+!C    CTIME          C: Initialization time                             *
+!C    DTIME (sec)    D: Number of seconds since midnight of the         *
+!C                      initialization date                             *
+!C    IERR           I: Logical Unit Number of error file 'ERROR.MSG'  *
+!C    MACH           C: Three character description of computer type    *
+!C    NDAY           I: Number of elapsed days since initialization call*
+!C    TADJ (sec)     D: Correction to TIMEON that accounts for date     *
+!C                      changes                                         *
+!C                                                                      *
+!C  None-standard features                                              *
+!C    LONG            : 32 bit absolute memory addressing function for  *
+!C                      Macintosh computers.  The memory address 362    *
+!C                      (decimal) has the number of 'tics',             *
+!C                      (60 tics = 1 second), elapse since the machine  *
+!C                      was turned on.  LONG is an INTEGER function.    *
+!C                                                                      *
+!C    TIMER           : Returns the number of 'tics', (100 tics = 1     *
+!C                      second), elapse since midnight on an IBM.       *
+!C                      TIMER is an INTEGER function.                   *
+!C                                                                      *
+!C    SECNDS          : Returns the number of seconds since midnight    *
+!C                      on a DEC. SECNDS is a REAL function.            *
+!C                                                                      *
+!C  Subroutines and functions called                                    *
+!C    CURRENTTIME     : Returns the current time in the format HH:MM:SS.*
+!C    NDAYS           : Returns the number of elapse days between two   *
+!C                      dates.                                          *
+!C    CURRENTDATE     : Returns the current date in the format MM/DD/YY.*
+!C    ERR_HANDLER     : Processes an error (diagnostic) message.        *
+!C                                                                      *
+!C  Intrinsic functions                                                 *
+!C    FLOAT                                                             *
+!C                                                                      *
+!C  Common blocks                                                       *
+!C    MTYPE                                                             *
+!C***********************************************************************
+!C
+!C***********************************************************************
+!C                                                                      *
+!      FUNCTION TIMEON (TIME0)
+!C
+!      DOUBLE PRECISION TIMEON, TIME0, DTIME, DTIME2
+!      INTEGER NTICKS, NDAY, NDAYS, IERR
+!      CHARACTER*3 MACH, COMP
+!      CHARACTER*8 CDATE, CDATE2, CTIME, CTIME2
+!C
+!      PARAMETER (IERR = 12)
+!C
+!      COMMON /MTYPE/ MACH, COMP
+!C
+!      EXTERNAL NDAYS
+!C
+!      SAVE NDAY, CDATE
+!C
+!	DATA CDATE2/'        '/
+!C  Set to zero to avoid compiler warnings
+!C
+!      DATA NTICKS/0/
+!C
+!C  The Dec and IBM timing routines are based on the number of seconds
+!C  elapsed since midnight.  Therefore, tracking the number of day changes
+!C  is necessary.
+!C
+!C  Accumulation of elapse days since initialization call
+!C
+!      IF (TIME0 .EQ. 0.0D0) THEN
+!        CALL CURRENTDATE(CDATE)
+!	  CALL CURRENTTIME(CTIME)
+!        NDAY = 0
+!C
+!C  Convert to the number of seconds since midnight of the
+!C  initialization call.
+!C
+!	  DTIME = FLOAT(
+!     A          3600*(10*ICHAR(CTIME(1:1)) + ICHAR(CTIME(2:2))) +
+!     B            60*(10*ICHAR(CTIME(4:4)) + ICHAR(CTIME(5:5))) +
+!     C               (10*ICHAR(CTIME(7:7)) + ICHAR(CTIME(8:8))) )
+!      TIMEON = DTIME
+!      RETURN
+!	END IF
+!C
+!C  Find current date and calulate the number of date changes since
+!C  the last call.  Then accumulate the total number of date changes
+!C  since the initialization call.
+!C
+!      CALL CURRENTDATE(CDATE2)
+!      CALL CURRENTTIME(CTIME2)
+!      NDAY = NDAY + NDAYS(CDATE,CDATE2)
+!      CDATE = CDATE2
+!	DTIME2 = FLOAT(
+!     A         3600*(10*ICHAR(CTIME2(1:1)) + ICHAR(CTIME2(2:2))) +
+!     B           60*(10*ICHAR(CTIME2(4:4)) + ICHAR(CTIME2(5:5))) +
+!     C              (10*ICHAR(CTIME2(7:7)) + ICHAR(CTIME2(8:8))) )
+!C
+!C  Machine specific elapse time calculations
+!C
+!      IF (MACH .EQ. 'MAC') THEN
+!C
+!C  Generic to all Macintosh compilers
+!C
+!C  The memory address 362 (decimal) has the time in seconds elapse
+!C  since the machine was turned on based on the 60 Hz counter.
+!C
+!C#######################################################################
+!CMAC        NTICKS = LONG(362)
+!C#######################################################################
+!        TIMEON = FLOAT(NTICKS)/60.0
+!      ELSE IF (MACH .EQ. 'DEC') THEN
+!C
+!C  The function SECONDS returns the number of seconds since midnight.
+!C  Account of the number of days for timing periods that are longer
+!C  than one day or run through midnight are made.
+!C
+!        TIMEON = FLOAT(NTICKS)/60.0
+!C#######################################################################
+!CDEC        TIMEON = SECNDS(0.0) + TADJ
+!C#######################################################################
+!      ELSE IF (MACH .EQ. 'IBM') THEN
+!C
+!        TIMEON = FLOAT(86400*NDAY) + DTIME2
+!      ELSE
+!        CALL ERR_HANDLER(TRIM('FUNCTION TIMEON: unsupported machine type
+!     &              '), 41, 2, 2, IERR)
+!      END IF
+!      RETURN
+!      END
 C                                                                      *
 C***********************************************************************
 C
