@@ -6124,12 +6124,12 @@ C***********************************************************************
 C                                                                      *
       FUNCTION INITSEED (IDUMMY)
 C
-      DOUBLE PRECISION TIMEON
+!      DOUBLE PRECISION TIMEON
       INTEGER INITSEED, IDUMMY
 C
-      EXTERNAL TIMEON
+!      EXTERNAL TIMEON
 C
-      INITSEED = INT(TIMEON(0.0D0))
+      INITSEED = 5
 C
 C  The random number generator seed must be non-zero.  If INITSEED = 0,
 C  set to documented default seed 305.
