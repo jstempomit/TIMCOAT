@@ -1,0 +1,24 @@
+!MS$FREEFORM
+! Microsoft Developer Studio generated include file.
+! Used by MPBR.rc
+!
+      integer, parameter :: IDD_DIALOG_MPBR                 = 101
+      integer, parameter :: IDD_DIALOG_INPUT                = 101
+      integer, parameter :: IDI_ICON_MPBR                   = 103
+      integer, parameter :: IDB_BITMAP_MPBR                 = 105
+      integer, parameter :: IDD_DIALOG_GREETING             = 106
+      integer, parameter :: IDB_BITMAP1                     = 107
+      integer, parameter :: IDD_DIALOG_POWERTYPE            = 109
+      integer, parameter :: IDD_DIALOG_PBAR                 = 110
+      integer, parameter :: IDC_EDIT_MPBRINPUT              = 1000
+      integer, parameter :: IDC_STATIC_PIC                  = 1003
+      integer, parameter :: IDC_STATIC_GREETING             = 1004
+      integer, parameter :: IDC_STATIC_COPYRIGHT            = 1005
+      integer, parameter :: IDC_STATIC_POWERTYPEPROMPT      = 1008
+      integer, parameter :: IDC_RADIO_POWER1                = 1009
+      integer, parameter :: IDC_RADIO_POWER2                = 1010
+      integer, parameter :: IDC_PROGRESS                    = 1010
+      integer, parameter :: IDC_RADIO_POWER3                = 1011
+      integer, parameter :: IDC_STATIC_PBAR1                = 1011
+      integer, parameter :: IDC_STATIC_PBAR2                = 1012
+      integer, parameter :: IDC_STATIC_PROMPT1              = 65535
