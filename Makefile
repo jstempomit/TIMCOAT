@@ -1,9 +1,4 @@
-program = cmfd 
-
-templates = $(wildcard templates/*.o)
-xml_fort = xml-fortran/xmlparse.o \
-           xml-fortran/read_xml_primitives.o \
-           xml-fortran/write_xml_primitives.o
+program = timcoat.exe
 
 #===============================================================================
 # Object Files
@@ -15,12 +10,12 @@ include OBJECTS
 # User Options
 #===============================================================================
 
-COMPILER = petsc
+COMPILER = intel
 DEBUG    = no
 PROFILE  = no
-OPTIMIZE = yes
+OPTIMIZE = no
 USE_MPI  = no
-USE_HDF5 = yes
+USE_HDF5 = no
 
 #===============================================================================
 # Add git SHA-1 hash
@@ -237,29 +232,23 @@ endif
 # Targets
 #===============================================================================
 
-all: xml-fortran $(program)
-xml-fortran:
-	cd xml-fortran; make MACHINE=$(MACHINE) F90=$(F90) F90FLAGS="$(F90FLAGS)"
-	cd templates; make F90=$(F90) F90FLAGS="$(F90FLAGS)"
+all: $(program)
 $(program): $(objects)
-	$(F90) $(objects) $(templates) $(xml_fort) $(gnuplt) -o $@ $(LDFLAGS)
-distclean: clean
-	cd xml-fortran; make clean
-	cd templates; make clean
+	$(F90) $(objects) -o $@ $(LDFLAGS)
 clean:
-	@rm -f *.o *.mod $(program)
+	@del *.obj *.mod $(program)
 neat:
-	@rm -f *.o *.mod
+	@del *.obj *.mod
 
 #===============================================================================
 # Rules
 #===============================================================================
 
-.SUFFIXES: .F90 .o
+.SUFFIXES: .for .obj
 .PHONY: all xml-fortran clean neat distclean 
 
-%.o: %.F90
-	$(F90) $(F90FLAGS) -DGIT_SHA1="\"$(GIT_SHA1)\"" -Ixml-fortran -Itemplates -c $<
+%.obj: %.for
+	$(F90) $(F90FLAGS) -c $<
 
 #===============================================================================
 # Dependencies

@@ -1,7 +1,7 @@
 objects = \
-Dialogs.o \
-materprop.o \
-mechanical_analysis.o \
-mechanical_FUEL.o \ 
-thermal_stress.o \
-TIMCOAT.o
+Dialogs.obj \
+materprop.obj \
+mechanical_analysis.obj \
+mechanical_FUEL.obj \
+thermal_stress.obj \
+TIMCOAT.obj
