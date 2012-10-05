@@ -5176,11 +5176,11 @@ C
 	    OPEN(UNIT = LUN, FILE = NAME(1:J+4), STATUS = 'OLD')
 c		STAT = 'OLD'
 	  ELSE
-	    CALL ERR_HANDLER('OPENFILE: File already exists',30,2,2,IERR)
+	    CALL ERR_HANDLER(TRIM('OPENFILE: File already exists'),30,2,2,IERR)
 	  END IF
 	ELSE IF((.NOT.EX) .AND. (STAT.EQ.'OLD')) THEN
 	  WRITE(*,*) 'File ',NAME(1:J+4),' does not exist.'
-	  CALL ERR_HANDLER('OPENFILE: File does not exist',29,1,1,IERR)
+	  CALL ERR_HANDLER(TRIM('OPENFILE: File does not exist'),29,1,1,IERR)
 C	  STAT = 'ERR'
 	ELSE
         OPEN(UNIT = LUN, FILE = NAME(1:J+4), STATUS = STAT)
@@ -5449,8 +5449,8 @@ C  TRISO fuel geometries, including calculation of fuel swelling
 	V_FUEL = V_FUEL*1.0D-18    !Convert V_FUEL from um^3 to m^3
       IF (R1 .GE. R2) THEN
 	  ERROR_CODE = 1
-	  CALL ERR_HANDLER('SUBROUTINE TEMPERATURE: R1 > R2, bad sample or
-     &               wrong calculation', 64, 1, 1, IERR)
+	  CALL ERR_HANDLER(TRIM('SUBROUTINE TEMPERATURE: R1 > R2, bad sample or
+     &               wrong calculation'), 64, 1, 1, IERR)
 	  RETURN
       END IF
       V_BUFFER = 4.0D0*PIE*(R2**3-R1**3)*1.0D-18/3.0D0
@@ -5524,8 +5524,8 @@ C   Volume of pebble zones (dimension: m^3)
 	V_PM = 4.0D0*PIE*(PEBRADIUS**3 - PFZRADIUS**3)/3.0D0
       IF (V_PFM .LT. 0.0D0) THEN
 	  ERROR_CODE = 2
-	  CALL ERR_HANDLER('SUBROUTINE TEMPERATURE: Input error on fuel 
-     &               particle quantities', 63, 2, 2, IERR)
+	  CALL ERR_HANDLER(TRIM('SUBROUTINE TEMPERATURE: Input error on fuel 
+     &               particle quantities'), 63, 2, 2, IERR)
 	END IF
 	A_CORE = PIE*CORE_RADIUS**2
       V_CORE = A_CORE*CORE_HEIGHT
@@ -5793,8 +5793,8 @@ C
 	  IMONTH = 10*(ICHAR(CDATE2(5:5)) - 48) + ICHAR(CDATE2(6:6)) - 48
 	  IDAY = 10*(ICHAR(CDATE2(7:7)) - 48) + ICHAR(CDATE2(8:8)) - 48
 	ELSE
-	  CALL ERR_HANDLER('SUBROUTINE CURRENTDATE: unsupported 
-     &					machine type', 42, 2, 2, IERR)
+	  CALL ERR_HANDLER(TRIM('SUBROUTINE CURRENTDATE: unsupported 
+     &					machine type'), 42, 2, 2, IERR)
 	END IF
 
 C  This was the original month scheme
@@ -6500,7 +6500,7 @@ C
 C  Be sure that MDIG is at least 16.  If not, a fatal error condition
 C
         IF (MDIG .LT. 16) CALL
-     A  ERR_HANDLER('FUNCTION RAN --MDIG less than 16',32,1,2,IERR)
+     AERR_HANDLER(TRIM('FUNCTION RAN --MDIG less than 16'),32,1,2,IERR)
         M1 = 2**(MDIG - 2) + (2**(MDIG - 2) - 1)
         M2 = 2**(MDIG/2)
         Z0 = (1.0D+00)/DBLE(M1)
