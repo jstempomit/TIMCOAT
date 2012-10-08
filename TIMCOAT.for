@@ -953,7 +953,7 @@ C
 C  ************************* Initialization ****************************
 C
 C  Display greeting window
-	Call Greeting()
+C	Call Greeting()
 C
 	IPYCFAIL = 0
 	SICFAIL = 0
@@ -998,11 +998,14 @@ C
 	SIGLVARO = 0.0D0   ! Standard deviation of EOL tangential stress in OPyC
 C
 C  Reactor core and TRISO fuel input data dialog boxes
-115	Call InputDialog(INPFILE1)
+C 115	Call InputDialog(INPFILE1)
+      INPFILE1='v2_inp_diecker'
 	FILESTAT = 'OLD'
       CALL OPENFILE(INPFILE1,'.dat',FILESTAT,IDAT1)
-	IF(FILESTAT.EQ.'ERR') GO TO 115
+C	IF(FILESTAT.EQ.'ERR') GO TO 115
 	FOPEN1 = .TRUE.
+	write(*,*) "HELLO"
+        stop
 C
 C  Read input data file:
 C
