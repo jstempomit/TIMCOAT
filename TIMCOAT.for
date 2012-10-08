@@ -678,6 +678,7 @@ C  Number of radial and axial divisions for power distribution, and number of to
       CHARACTER*256  OSPEC
       CHARACTER*8  RUNIRR
       CHARACTER*3  MACH,COMP,FILESTAT
+      INTEGER INPSTAT
       CHARACTER*1  CHOICE1
       CHARACTER*1  TAB     
       CHARACTER*1  FF
@@ -999,10 +1000,14 @@ C
 C
 C  Reactor core and TRISO fuel input data dialog boxes
 C 115	Call InputDialog(INPFILE1)
-      INPFILE1='v2_inp_diecker'
+      INPFILE1='v2_inp_diecker.dat'
 	FILESTAT = 'OLD'
-      CALL OPENFILE(INPFILE1,'.dat',FILESTAT,IDAT1)
-C	IF(FILESTAT.EQ.'ERR') GO TO 115
+      OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
+     &     IOSTAT=INPSTATUS)
+	IF(INPSTATUS>0) THEN
+	  WRITE(*,*) 'FILENAME: '//TRIM(INPFILE1)//' CANNOT BE FOUND!'
+	  STOP
+	END IF
 	FOPEN1 = .TRUE.
 	write(*,*) "HELLO"
         stop
