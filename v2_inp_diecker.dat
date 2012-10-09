@@ -68,6 +68,5 @@ NOMINAL = .FALSE., ! flag turning on/off Monte Carlo sampling
 DIFFUSION = .FALSE., ! flag turning on/off diffusion model for gas release
 HISTOGRAM = .TRUE., ! flag turning on/off histogram outputs
 RUNIRR = 'FAILURE', ! flag turning on/off fuel failure evaluation
-USERSEED = .TRUE., ! flag determining whether ISEED from users is
-used
+USERSEED = .TRUE. ! flag determining whether ISEED from users is
 $END
