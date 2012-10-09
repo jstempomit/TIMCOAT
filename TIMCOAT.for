@@ -377,7 +377,7 @@ C  R43         R*8      M  : Cube of R4  [microns^3]
 C  R5          R*8      V  : Actual OPyC outer radius [microns]
 C  R53         R*8      M  : Cube of R5  [microns^3]
 C  RADIUS      R*8      M  : Position in the layers of particles
-C  RAN         R*8      F  : Random number generator
+C  RAND         R*8      F  : Random number generator
 C  RNCASES     R*8      M  : Number of cases (NCASES) as a REAL*8
 C  RRNCASES    R*8      M  : Reciprocal of RNCASES
 C  RUNIRR      C*8      I  : Treatments during irradiation
@@ -535,7 +535,7 @@ C     GAUSSIAN
 C	INITSEED
 C     LEAP
 C     NDAYS
-C	RAN
+C	RAND
 C     TIMEON
 C     TRIANGLE
 C     WEIBULL
@@ -690,6 +690,7 @@ C  Number of radial and axial divisions for power distribution, and number of to
       LOGICAL FOPEN1, FOPEN2, FOPEN3, FOPEN4  ! Flags whether input file is open
       LOGICAL USERSEED      ! Flags user input of random number seed
 	LOGICAL DEBUG, EX
+	DOUBLE PRECISION RN
 C
       PARAMETER (  NA = 6.02D23,
      &             R = 8.3144 D0,
@@ -840,7 +841,7 @@ C  Functions declared EXTERNAL
 	EXTERNAL FLUX
       EXTERNAL GAUSSIAN
       EXTERNAL INITSEED
-      EXTERNAL RAN
+C      EXTERNAL RAND
       EXTERNAL TRIANGLE
       EXTERNAL WEIBULL
 C
@@ -1009,8 +1010,6 @@ C 115	Call InputDialog(INPFILE1)
 	  STOP
 	END IF
 	FOPEN1 = .TRUE.
-	write(*,*) "HELLO"
-        stop
 C
 C  Read input data file:
 C
@@ -1038,13 +1037,19 @@ C
      B     50, 1, 1, IERR)
         ISEED = 305
 	END IF
-	Z = RAN (ISEED)    !Initialize random number generator
+	CALL RANDOM_SEED
+	CALL RANDOM_NUMBER(RN)
+	Z = RN    !Initialize random number generator
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
 C
-	Call PowerTypeDialog(PSWITCH)
+C	Call PowerTypeDialog(PSWITCH)
 C
+      PSWITCH = 3          !Select reactor power history
+                               ! 1 - user provides power distribution
+                               ! 2 - user provides power history
+                               ! 3 - user doesn't provide power; assume uniform power density
       IF(PSWITCH .EQ. 1) THEN
 	  WRITE(ITERM,*) ' Is it from new or old core model?',
      &				 ' Please choose a number (new = 1, old = 2):'
@@ -1093,8 +1098,10 @@ C     Assign arrays for particle history card and history stresses
       ELSE IF(PSWITCH .EQ. 2) THEN
         WRITE(ITERM,*) ' Please enter the filename (Omit .dat) ',
      &				 ' for the irradiation history: '
-        READ(IKEY,602) INPFILE3
-        CALL OPENFILE(INPFILE3,'.dat','OLD',IDAT3)
+       READ(IKEY,602) INPFILE3
+       FILESTAT = 'OLD'
+       OPEN(FILE = INPFILE3,STATUS = FILESTAT,UNIT = IDAT3, 
+     &     IOSTAT=INPSTATUS)
         FOPEN3 = .TRUE.
         WRITE(ITERM,*) ' Thanks.'
         LENGTH_OF_FILE = 0
@@ -1123,28 +1130,28 @@ C     Determine the dimension of array of irradiaton history and read in data
       WRITE(ITERM,*)
 C
 C  In order to perform parametric study, place the flag PARAMETRIC_STUDY as true
-c	PARAMETRIC_STUDY = .TRUE.
+	PARAMETRIC_STUDY = .FALSE.
 C  If perturbation analysis is to be performed, set PERTURBATION_ANALYSIS to .TRUE.
 C  If surface analysis is to be performed, set SURFACE_ANALYSIS to .TRUE., instead
 	PERTURBATION_ANALYSIS = .TRUE.
 c	SURFACE_ANALYSIS = .TRUE.
 C
 C  Open output files
-	CALL OPENFILE(OSPEC,'.out','NEW',IOUT)
+	OPEN (FILE = TRIM(OSPEC)//'.out',STATUS = "REPLACE",UNIT = IOUT)	
 C
 	IF(.NOT. PARAMETRIC_STUDY) THEN
 C  Open an output file for debugging imformation
 	  IF(DEBUG) THEN
-	    CALL OPENFILE(OSPEC,'.dbg','NEW',IDBG)
+	    OPEN(FILE = TRIM(OSPEC)//'.dbg',STATUS="REPLACE",UNIT = IDBG)
 C  Open intermediate variable output files for chemistry model
-          CALL OPENFILE('KI_SIC','.out','NEW', IKISIC)
+          OPEN (FILE ='KI_SIC'//'.out',STATUS ="REPLACE", UNIT = IKISIC)
 	      WRITE (IKISIC,*) 'N','OPERTIME','DT','KI1'
-	    CALL OPENFILE('CORR','.out','NEW', CORR)
+	  OPEN (FILE = 'CORR'//'.out',STATUS = "REPLACE", UNIT = CORR)
 	      WRITE (CORR,*) 'N','OPERTIME','R3'
 	  END IF         
 C  Open an output file for particle histogram
         IF(HISTOGRAM)  THEN
-	    CALL OPENFILE(OSPEC,'.his','NEW',IHIS)
+	    OPEN (FILE=TRIM(OSPEC)//'.his',STATUS="REPLACE",UNIT=IHIS)
 C    Clear arrays for histograms
 	    DO 125 I = 0, NHIS
 	      DO 126 J = 1, 4
@@ -1158,7 +1165,7 @@ C    Clear arrays for histograms
 C  Open an output file to record information about failed particles
 C  if Monte Carlo sampling is performed.
 	  IF(.NOT.NOMINAL) THEN
-	    CALL OPENFILE('failures','.dat','NEW',IOUTFL)
+	    OPEN(FILE='failures'//'.dat',STATUS = "NEW",UNIT=IOUTFL)
 	    IF(PSWITCH.EQ.1) THEN
 	      WRITE(IOUTFL, 643)
 	    ELSE
@@ -1167,9 +1174,9 @@ C  if Monte Carlo sampling is performed.
 	  END IF
 C  Open an output file for parametric study
 	ELSE
-	  CALL OPENFILE('_IPyCStress','.prm','NEW',IPRMI)
+	  OPEN(FILE='_IPyCStress'//'.prm',STATUS="NEW",UNIT=IPRMI)
 	  IF(SURFACE_ANALYSIS) THEN
-	    CALL OPENFILE('_SiCStress','.prm','NEW',IPRMS)
+	    OPEN(FILE='_SiCStress'//'.prm',STATUS="NEW",UNIT=IPRMS)
 	  END IF
 	  DO 131 I = 1, 2
 		DO 132 J = 1, 4
@@ -1310,33 +1317,35 @@ C    NOMINAL = .FALSE. --> Sample NCASES particles (NCASES about 1,000,000)
 C
         IF(.NOT. PARAMETRIC_STUDY) THEN
 	    IF(PSWITCH.EQ.1) THEN
-  	      CALL OPENFILE('test    ','.out','NEW',ITEST)
-	      CALL OPENFILE('out_core','.dat','NEW',IOUTR)
-		  WRITE(IOUTR,637) 
-	      CALL OPENFILE('out_temp','.dat','NEW',IOUTT)
-	      CALL OPENFILE('out_swel','.dat','NEW',IOUTSW)
-	      CALL OPENFILE('out_sigr','.dat','NEW',IOUTSR)
-	      CALL OPENFILE('out_sigt','.dat','NEW',IOUTST)
-	      CALL OPENFILE('out_epir','.dat','NEW',IOUTER)
-	      CALL OPENFILE('out_epit','.dat','NEW',IOUTET)
-	      CALL OPENFILE('out_ur','.dat','NEW',IOUTUR)
-		ELSE IF(PSWITCH.EQ.2) THEN
-		  CALL OPENFILE('irr_histry','.out','NEW',ITEST)
-		  CALL OPENFILE('out_swel','.dat','NEW',IOUTSW)
-	  	  CALL OPENFILE('out_sigr','.dat','NEW',IOUTSR)
-	      CALL OPENFILE('out_sigt','.dat','NEW',IOUTST)
-	      CALL OPENFILE('out_epir','.dat','NEW',IOUTER)
-	      CALL OPENFILE('out_epit','.dat','NEW',IOUTET)
-	      CALL OPENFILE('out_ur','.dat','NEW',IOUTUR)
+  	      OPEN(FILE='test    '//'.out',STATUS="REPLACE",UNIT=ITEST)
+	      OPEN(FILE='out_core'//'.dat',STATUS="REPLACE",UNIT=IOUTR)
+	       WRITE(IOUTR,637) 
+	      OPEN(FILE='out_temp'//'.dat',STATUS="REPLACE",UNIT=IOUTT)
+	      OPEN(FILE='out_swel'//'.dat',STATUS="REPLACE",UNIT=IOUTSW)
+	      OPEN(FILE='out_sigr'//'.dat',STATUS="REPLACE",UNIT=IOUTSR)
+	      OPEN(FILE='out_sigt'//'.dat',STATUS="REPLACE",UNIT=IOUTST)
+	      OPEN(FILE='out_epir'//'.dat',STATUS="REPLACE",UNIT=IOUTER)
+	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
+	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
+	    ELSE IF(PSWITCH.EQ.2) THEN
+	      OPEN(FILE='irr_histry'//'.out',STATUS="REPLACE",UNIT=ITEST)
+	      OPEN(FILE='out_swel'//'.dat',STATUS="REPLACE",UNIT=IOUTSW)
+	      OPEN(FILE='out_sigr'//'.dat',STATUS="REPLACE",UNIT=IOUTSR)
+	      OPEN(FILE='out_sigt'//'.dat',STATUS="REPLACE",UNIT=IOUTST)
+	      OPEN(FILE='out_epir'//'.dat',STATUS="REPLACE",UNIT=IOUTER)
+	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
+	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
 	    ELSE IF(PSWITCH.EQ.3) THEN
-	      CALL OPENFILE('cap_test','.out','NEW',ITEST)
-	      CALL OPENFILE('out_swel','.dat','NEW',IOUTSW)
-	  	  CALL OPENFILE('out_sigr','.dat','NEW',IOUTSR)
-	      CALL OPENFILE('out_sigt','.dat','NEW',IOUTST)
-	      CALL OPENFILE('out_epir','.dat','NEW',IOUTER)
-	      CALL OPENFILE('out_epit','.dat','NEW',IOUTET)
-	      CALL OPENFILE('out_ur','.dat','NEW',IOUTUR)
+	      OPEN(FILE='cap_test'//'.out',STATUS="REPLACE",UNIT=ITEST)
+	      OPEN(FILE='out_swel'//'.dat',STATUS="REPLACE",UNIT=IOUTSW)
+	      OPEN(FILE='out_sigr'//'.dat',STATUS="REPLACE",UNIT=IOUTSR)
+	      OPEN(FILE='out_sigt'//'.dat',STATUS="REPLACE",UNIT=IOUTST)
+	      OPEN(FILE='out_epir'//'.dat',STATUS="REPLACE",UNIT=IOUTER)
+	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
+	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
 	    END IF
+	     WRITE(*,*) 'HELLO'
+	     STOP
 C    Write headings to stress, strains, and displacement output files
           WRITE(IOUTSR,629) RADIUS
           WRITE(IOUTST,629) RADIUS
@@ -1408,7 +1417,6 @@ C201	  IPYCBAF0 = GAUSSIAN(IPYCBAF0I, IPYCBAFVAR)
 C	  IF (IPYCBAF0 .LE. 1.0D0) GOTO 201
 C202	  OPYCBAF0 = GAUSSIAN(OPYCBAF0I, OPYCBAFVAR)
 C	  IF (OPYCBAF0 .LE. 1.0D0) GOTO 202
-C
 	  R10 = TRIANGLE(KERNDIA,  KERNVAR)/X2
 	  R20 = R10 + TRIANGLE(BUFFTHK,  BUFFVAR)
 	  R30 = R20 + TRIANGLE(IPYCTHK,  IPYCVAR)
@@ -1462,7 +1470,7 @@ C
 	ERROR_CODE = -1  !capture errors when analyze this particle
 	OPERTIME = 0.0D0
 C    For constant power irradiation, namely, PSWITCH=3, IRRTIME is known beforehand
-	IF((PSWITCH.EQ.1).OR.(PSWITCH.EQ.2)) THEN
+      IF((PSWITCH.EQ.1).OR.(PSWITCH.EQ.2)) THEN
 	  IRRTIME = 0.0D0
 	END IF
       BURNUP = 0.0D0    !the particle/pebble is fresh.
@@ -1471,7 +1479,10 @@ C    For constant power irradiation, namely, PSWITCH=3, IRRTIME is known beforeh
 	DF = 0.0D0
 	QPPP = 0.0D0
 	PRESS = 0.0D0
-      R_IN_PEBBLE = RAN(0)*PFZRADIUS
+	CALL RANDOM_NUMBER(RN)
+       R_IN_PEBBLE = RN
+	CALL RANDOM_NUMBER(RN)
+	R_IN_PEBBLE = R_IN_PEBBLE*PFZRADIUS
 C    Clear kernel migration distance
       MD = 0.0D0
 C    Reset statistical variables
@@ -4649,7 +4660,7 @@ C    NCHANNEL2      D: number of channels from old VSOP model          *
 C    NAXIAL2        D: number of axial divisions from old VSOP model   *
 C                                                                      *
 C  Function called                                                     *
-C    RAN            D: random number generator (0,1]                   *
+C    RAND            D: random number generator (0,1]                   *
 C    DSQRT          D: calculate square root                           *
 C***********************************************************************
 C
@@ -4666,12 +4677,13 @@ C
 C
 	DIMENSION CHANNELS(1:,-1:), PATH(1:,1:)
 C
-      EXTERNAL  RAN
+C      EXTERNAL  RAND
 C
 	IF (COREMODEL .EQ. 1) THEN
         WIDTH = CHANNELS(1,NCHANNEL1)
         MODERATOR = CHANNELS(1,0)
-2405    R = WIDTH*RAN(0)
+        CALL RANDOM_NUMBER(RN)
+2405    R = WIDTH*RN
         IF(R.LE.MODERATOR) THEN !Pebbles don't go into moderator, so sample again
           GO TO 2405
         END IF
@@ -4690,11 +4702,13 @@ C  Calculate the streamline of pebble
 	ELSE IF (COREMODEL .EQ. 2) THEN
         WIDTH = CHANNELS(1,NCHANNEL2) - CHANNELS(1,0)
         MODERATOR = CHANNELS(1,1)
-2415    R = WIDTH*RAN(0)
+2415  CALL RANDOM_NUMBER(RN)  
+      R = WIDTH*RN
         IF(R.LE.MODERATOR) THEN !Pebbles don't go into moderator, so sample again
           GO TO 2415
 	  ELSE IF(R.LE.CHANNELS(1,2)) THEN
-          IF(RAN(0).LE.0.5D0) GO TO 2415 !Channel two is graphite/pebble 50/50 mixed
+	  CALL RANDOM_NUMBER(RN)
+          IF(RN.LE.0.5D0) GO TO 2415 !Channel two is graphite/pebble 50/50 mixed
         END IF
         CALL LOCATE_ARRAY(CHANNELS(1,1:5),5,2,R,WHICH_CHN)
 C  Calculate the streamline of pebble
@@ -5339,7 +5353,7 @@ C    LOCATE_ARRAY   S:                                                 *
 C    ERR_HANDLER    S:                                                 *
 C    TPEBBLE        F:                                                 *
 C    TPARTICLE      F:                                                 *
-C    RAN            F:                                                 *
+C    RAND           F:                                                 *
 C***********************************************************************
 C
 C***********************************************************************
@@ -5393,7 +5407,7 @@ C  Common blocks
 	COMMON /PAR_T/ K_FUEL, K_BUFFER, K_IPYC, K_SIC, K_OPYC
 	COMMON /ERRHANDLE/ ERROR_CODE
 C
-	EXTERNAL RAN
+C	EXTERNAL RAND
       EXTERNAL TPARTICLE
 	EXTERNAL TPEBBLE
 C  Save pebble temperature profile for next step usage.
@@ -6066,7 +6080,7 @@ C    R              D: Intermediate variable                           *
 C    FACTOR         D: Intermediate variable                           *
 C                                                                      *
 C  Functions and subroutines called                                    *
-C    RAN             : Random number generator on the interval (0,1].  *
+C    RAND            : Random number generator on the interval (0,1].  *
 C                      Assumed initialized by calling routine.         *
 C                                                                      *
 C  Intrinsic functions called                                          *
@@ -6079,10 +6093,10 @@ C                                                                      *
       FUNCTION GAUSSIAN(MEAN, STDDEV)
 C
       DOUBLE PRECISION GAUSSIAN, MEAN, STDDEV             ! Global variables
-      DOUBLE PRECISION V1, V2, R, FACTOR, RAN, X1, X2     ! Local variables
+      DOUBLE PRECISION V1, V2, R, FACTOR, X1, X2     ! Local variables
       INTEGER ISET
 C
-      EXTERNAL RAN
+C      EXTERNAL RAND
 C
       SAVE ISET, V1, FACTOR, X1, X2
 C
@@ -6092,8 +6106,10 @@ C  Local flag to use second deviate
 C
       IF (ISET .EQ. 0) THEN
 C  Cosine and Sin distributions
-4110    V1 = X2*RAN(0) - X1
-        V2 = X2*RAN(0) - X1
+4110    CALL RANDOM_NUMBER(RN)    
+        V1 = X2*RN - X1
+        CALL RANDOM_NUMBER(RN)
+        V2 = X2*RN - X1
         R = V1**2 + V2**2
         IF (R .GE. X1) GO TO 4110
         FACTOR = DSQRT(- X2*DLOG(R)/R)
@@ -6338,233 +6354,233 @@ C
 C
 C***********************************************************************
 C                                                                      *
-C  Function RAN                                                        *
-C                                                                      *
-C  This routine generates quasi uniform random numbers on the          *
-C  interval (0,1] with density (2^31 - 1) using the lagged Fibonacci   *
-C  sequence.                                                           *
-C                                                                      *
-C      Xn = [X(n-17) - X(n - 5)] Mod[m]                                *
-C                                                                      *
-C  where                                                               *
-C                                                                      *
-C      m = 2**(MDIG - 2) + (2**(MDIG - 2) - 1)                         *
-C      MDIG = number of binary digit available for representing        *
-C             integers, including the sign bit.                        *
-C                                                                      *
-C***********************************************************************
-C                                                                      *
-C  Author    Blue, James, Scientific Computing Division, NBS           *
-C            Kahaner, Davis, Scientific Computing Division, NBS        *
-C            Marsaglia, George, Computer Science Department,           *
-C            Washington State university.                              *
-C                                                                      *
-C  Modified by Lorenz H. Menke, Jr., (208) 526-8918 EG&G Idaho, Inc.,  *
-C  PO Box 1625, Idaho Falls, ID 83415-1575.                            *
-C                                                                      *
-C  Purpose   This routine generates two quasi uniform random numbers   *
-C            on the interval (0,1].  It can be used with any computer  *
-C            which allows integers at least as large as 32767.         *
-C                                                                      *
-C  Description                                                         *
-C                                                                      *
-C  This routine generates quasi uniform random numbers on the interval *
-C  (0,1].  It can be used with any computer which allows integers at   *
-C  least as large as 32767.                                            *
-C                                                                      *
-C   Use:                                                               *
-C                                                                      *
-C       First time ...                                                 *
-C                                                                      *
-C       Z = RAN (JD)                                                   *
-C                                                                      *
-C       Here JD is any  N O N - Z E R O  integer.  This causes         *
-C       initialization of the program and the first two random         *
-C       numbers to be returned as Z1 and Z2.                           *
-C                                                                      *
-C       Subsequent times...                                            *
-C                                                                      *
-C       Z = RAN (0)                                                    *
-C                                                                      *
-C       Causes the next random number to be returned as Z.             *
-C                                                                      *
-C***********************************************************************
-C                                                                      *
-C  Note:   Users who wish to transport this program from one computer  *
-C          to another should read the following information...         *
-C                                                                      *
-C  Machine dependencies...                                             *
-C                                                                      *
-C  MDIG    =  A lower bound on the number of binary digit available    *
-C             for representing integers, including the sign bit.       *
-C             This value must be at least 16, but may be increased     *
-C             in line with remark A below.                             *
-C                                                                      *
-C  Remarks...                                                          *
-C                                                                      *
-C      A. This program can be used in two ways:                        *
-C                                                                      *
-C          (1) To obtain repeatable results on different computers     *
-C              set 'MDIG' to the smallest of its values on each, or,   *
-C          (2) to allow the longest sequence of random numbers to be   *
-C              generated without cycling (repeating) set 'MDIG' to the *
-C              largest possible value.                                 *
-C                                                                      *
-C      B. The sequence of numbers depends on the initial input 'JD'    *
-C         as well as the value of 'MDIG'.                              *
-C                                                                      *
-C             If MDIG = 16 one should find that                        *
-C             The first evaluation                                     *
-C                 Z = UNI(305,Z1,Z2) gives Z1 = .027832881...          *
-C                 and Z2 = .56102176...                                *
-C             The second evaluation                                    *
-C                 Z = UNI(0,Z1,Z2) gives   Z1 = .41456343...           *
-C                 and Z2 = .19797357...                                *
-C                                                                      *
-C***********************************************************************
-C                                                                      *
-C  Actual variable description                                         *
-C                                                                      *
-C  Z1        :  First random number.                                   *
-C  Z2        :  Second random number.                                  *
-C  JD        :  Random number generator seed.  JD is used to           *
-C               initialize the random number generator.                *
-C  MDIG      :  A lower bound on the number of binary digit available  *
-C               for representing integers, including the sign bit.     *
-C  M         :  Array containing starting sequence.                    *
-C                                                                      *
-C  Local variables                                                     *
-C                                                                      *
-C  JSEED     :  Modified seed.                                         *
-C  I,J       :  Loop index.                                            *
-C  K         :  Differences between M array elements.                  *
-C  M1        :  Modulus.                                               *
-C  M2,K0,K1, :  intermediate values.                                   *
-C  J0,J1                                                               *
-C  R0        :  Numerical constant 0                                   *
-C  R1        :  Numerical constant 1                                   *
-C  Z0        :  1/M1, scales the random umber to (0,1]                 *
-C                                                                      *
-C***********************************************************************
-C                                                                      *
-C  Functions and subroutines called:                                   *
-C                                                                      *
-C  ERR_HANDLER :  Processes an error (diagnostic) message.             *
-C                                                                      *
-C  Intrinsic functions:                                                *
-C                                                                      *
-C  DBLE                                                                *
-C  IABS                                                                *
-C  MIN0                                                                *
-C  MOD                                                                 *
-C                                                                      *
-C***********************************************************************
-C
-C***********************************************************************
-C                                                                      *
-      FUNCTION RAN (JD)
-C
-      DOUBLE PRECISION RAN, Z0, Z1, Z2, R0, R1
-      INTEGER I, J, K, M, M1, M2, JD, MDIG, K0, K1, J0, J1, JSEED
-C
-      PARAMETER (IERR = 12)
-      DIMENSION M(17)
-C
-      SAVE I, J, M, M1, M2
-C
-	DATA M(1), M(2), M(3), M(4), M(5), M(6), M(7), M(8), M(9), M(10),
-     1     M(11), M(12), M(13), M(14), M(15), M(16), M(17)
-     2  / 30788, 23052, 2053, 19346, 10646, 19427, 23975, 19049, 10949,
-     3    19693, 29746, 26748, 2796, 23890, 29168, 31924, 16499 /
-      DATA M1, M2, I, J / 32767, 256, 5, 17 /
-C
-C  32 bit constant; 1/(2^31 - 1) = 4.6566 12875 24579 6923 X 10**-10
-C
-C      DATA Z0/4.6566 12875 24579 6923 D-10
-	DATA R0/0.0 D+00/, R1/1.0 D+00/
-C  
-C  First executable statement  RAN.
-C
-C  Check if random number generator has been initialized, if not
-C  initialize it.
-C
-      IF (JD .NE. 0) THEN
-C
-C***********************************************************************
-C
-C  Machine dependent variable, MDIG
-C
-C  Largest integer supported by 32 bit machines such as Macintosh,
-C  IBM/IBM compatible PCs and DEC 5000 class workstations is:
-C
-C      2**31 - 1 = 2,147,483,647
-C
-C      (2^31 - 1)  -> 31 + 1 (sign) = 32 = MDIG
-C
-        MDIG = 32
-C
-C***********************************************************************
-C
-C  Be sure that MDIG is at least 16.  If not, a fatal error condition
-C
-        IF (MDIG .LT. 16) CALL
-     AERR_HANDLER(TRIM('FUNCTION RAN --MDIG less than 16'),32,1,2,IERR)
-        M1 = 2**(MDIG - 2) + (2**(MDIG - 2) - 1)
-        M2 = 2**(MDIG/2)
-        Z0 = (1.0D+00)/DBLE(M1)
-	  JSEED = MIN0(IABS(JD),M1)
-C
-C  Check if JSEED is odd.
-C
-        IF (MOD(JSEED,2) .EQ. 0) JSEED = JSEED - 1
-        K0 = MOD(9069,M2)
-        K1 = 9069/M2
-        J0 = MOD(JSEED,M2)
-        J1 = JSEED/M2
-        DO 4310 I = 1, 17
-          JSEED = J0*K0
-          J1 = MOD(JSEED/M2 + J0*K1 + J1*K0, M2/2)
-          J0 = MOD(JSEED,M2)
-          M(I) = J0 + M2*J1
-4310      CONTINUE
-        I = 5
-        J = 17
-      END IF
-C
-C  Begin main loop here.
-C
-C  First random number, NOT normalized
-C
-4320  K = M(I) - M(J)
-      IF (K .LT. 0) K = K + M1
-      M(J) = K
-      I = I - 1
-      IF (I .EQ. 0) I = 17
-      J = J - 1
-      IF (J .EQ. 0) J = 17
-C     Z1 = DBLE(K)*Z3   ! original
-	Z1 = DBLE(K)
-C
-C  Second random number, normalized
-C      
-      K = M(I) - M(J)
-      IF (K .LT. 0) K = K + M1
-      M(J) = K
-      I = I - 1
-      IF (I .EQ. 0) I = 17
-      J = J - 1
-      IF (J .EQ. 0) J = 17
-C      Z2 = DBLE(K)*Z3    ! original
-	Z2 = DBLE(K)*Z0
-C
-C  Combination random number generator
-C
-C  Extend lower range to ~ Z0^2 = .....
-C
-	RAN = (Z1 - Z2)*Z0
-	IF ((RAN .GE. R1) .OR. (RAN .LE. R0)) GOTO 4320
-      RETURN
-      END
+!C  Function RAN                                                        *
+!C                                                                      *
+!C  This routine generates quasi uniform random numbers on the          *
+!C  interval (0,1] with density (2^31 - 1) using the lagged Fibonacci   *
+!C  sequence.                                                           *
+!C                                                                      *
+!C      Xn = [X(n-17) - X(n - 5)] Mod[m]                                *
+!C                                                                      *
+!C  where                                                               *
+!C                                                                      *
+!C      m = 2**(MDIG - 2) + (2**(MDIG - 2) - 1)                         *
+!C      MDIG = number of binary digit available for representing        *
+!C             integers, including the sign bit.                        *
+!C                                                                      *
+!C***********************************************************************
+!C                                                                      *
+!C  Author    Blue, James, Scientific Computing Division, NBS           *
+!C            Kahaner, Davis, Scientific Computing Division, NBS        *
+!C            Marsaglia, George, Computer Science Department,           *
+!C            Washington State university.                              *
+!C                                                                      *
+!C  Modified by Lorenz H. Menke, Jr., (208) 526-8918 EG&G Idaho, Inc.,  *
+!C  PO Box 1625, Idaho Falls, ID 83415-1575.                            *
+!C                                                                      *
+!C  Purpose   This routine generates two quasi uniform random numbers   *
+!C            on the interval (0,1].  It can be used with any computer  *
+!C            which allows integers at least as large as 32767.         *
+!C                                                                      *
+!C  Description                                                         *
+!C                                                                      *
+!C  This routine generates quasi uniform random numbers on the interval *
+!C  (0,1].  It can be used with any computer which allows integers at   *
+!C  least as large as 32767.                                            *
+!C                                                                      *
+!C   Use:                                                               *
+!C                                                                      *
+!C       First time ...                                                 *
+!C                                                                      *
+!C       Z = RAN (JD)                                                   *
+!C                                                                      *
+!C       Here JD is any  N O N - Z E R O  integer.  This causes         *
+!C       initialization of the program and the first two random         *
+!C       numbers to be returned as Z1 and Z2.                           *
+!C                                                                      *
+!C       Subsequent times...                                            *
+!C                                                                      *
+!C       Z = RAN (0)                                                    *
+!C                                                                      *
+!C       Causes the next random number to be returned as Z.             *
+!C                                                                      *
+!C***********************************************************************
+!C                                                                      *
+!C  Note:   Users who wish to transport this program from one computer  *
+!C          to another should read the following information...         *
+!C                                                                      *
+!C  Machine dependencies...                                             *
+!C                                                                      *
+!C  MDIG    =  A lower bound on the number of binary digit available    *
+!C             for representing integers, including the sign bit.       *
+!C             This value must be at least 16, but may be increased     *
+!C             in line with remark A below.                             *
+!C                                                                      *
+!C  Remarks...                                                          *
+!C                                                                      *
+!C      A. This program can be used in two ways:                        *
+!C                                                                      *
+!C          (1) To obtain repeatable results on different computers     *
+!C              set 'MDIG' to the smallest of its values on each, or,   *
+!C          (2) to allow the longest sequence of random numbers to be   *
+!C              generated without cycling (repeating) set 'MDIG' to the *
+!C              largest possible value.                                 *
+!C                                                                      *
+!C      B. The sequence of numbers depends on the initial input 'JD'    *
+!C         as well as the value of 'MDIG'.                              *
+!C                                                                      *
+!C             If MDIG = 16 one should find that                        *
+!C             The first evaluation                                     *
+!C                 Z = UNI(305,Z1,Z2) gives Z1 = .027832881...          *
+!C                 and Z2 = .56102176...                                *
+!C             The second evaluation                                    *
+!C                 Z = UNI(0,Z1,Z2) gives   Z1 = .41456343...           *
+!C                 and Z2 = .19797357...                                *
+!C                                                                      *
+!C***********************************************************************
+!C                                                                      *
+!C  Actual variable description                                         *
+!C                                                                      *
+!C  Z1        :  First random number.                                   *
+!C  Z2        :  Second random number.                                  *
+!C  JD        :  Random number generator seed.  JD is used to           *
+!C               initialize the random number generator.                *
+!C  MDIG      :  A lower bound on the number of binary digit available  *
+!C               for representing integers, including the sign bit.     *
+!C  M         :  Array containing starting sequence.                    *
+!C                                                                      *
+!C  Local variables                                                     *
+!C                                                                      *
+!C  JSEED     :  Modified seed.                                         *
+!C  I,J       :  Loop index.                                            *
+!C  K         :  Differences between M array elements.                  *
+!C  M1        :  Modulus.                                               *
+!C  M2,K0,K1, :  intermediate values.                                   *
+!C  J0,J1                                                               *
+!C  R0        :  Numerical constant 0                                   *
+!C  R1        :  Numerical constant 1                                   *
+!C  Z0        :  1/M1, scales the random umber to (0,1]                 *
+!C                                                                      *
+!C***********************************************************************
+!C                                                                      *
+!C  Functions and subroutines called:                                   *
+!C                                                                      *
+!C  ERR_HANDLER :  Processes an error (diagnostic) message.             *
+!C                                                                      *
+!C  Intrinsic functions:                                                *
+!C                                                                      *
+!C  DBLE                                                                *
+!C  IABS                                                                *
+!C  MIN0                                                                *
+!C  MOD                                                                 *
+!C                                                                      *
+!C***********************************************************************
+!C
+!C***********************************************************************
+!C                                                                      *
+!      FUNCTION RAN (JD)
+!C
+!      DOUBLE PRECISION RAN, Z0, Z1, Z2, R0, R1
+!      INTEGER I, J, K, M, M1, M2, JD, MDIG, K0, K1, J0, J1, JSEED
+!C
+!      PARAMETER (IERR = 12)
+!      DIMENSION M(17)
+!C
+!      SAVE I, J, M, M1, M2
+!C
+!	DATA M(1), M(2), M(3), M(4), M(5), M(6), M(7), M(8), M(9), M(10),
+!     1     M(11), M(12), M(13), M(14), M(15), M(16), M(17)
+!     2  / 30788, 23052, 2053, 19346, 10646, 19427, 23975, 19049, 10949,
+!     3    19693, 29746, 26748, 2796, 23890, 29168, 31924, 16499 /
+!      DATA M1, M2, I, J / 32767, 256, 5, 17 /
+!C
+!C  32 bit constant; 1/(2^31 - 1) = 4.6566 12875 24579 6923 X 10**-10
+!C
+!C      DATA Z0/4.6566 12875 24579 6923 D-10
+!	DATA R0/0.0 D+00/, R1/1.0 D+00/
+!C  
+!C  First executable statement  RAN.
+!C
+!C  Check if random number generator has been initialized, if not
+!C  initialize it.
+!C
+!      IF (JD .NE. 0) THEN
+!C
+!C***********************************************************************
+!C
+!C  Machine dependent variable, MDIG
+!C
+!C  Largest integer supported by 32 bit machines such as Macintosh,
+!C  IBM/IBM compatible PCs and DEC 5000 class workstations is:
+!C
+!C      2**31 - 1 = 2,147,483,647
+!C
+!C      (2^31 - 1)  -> 31 + 1 (sign) = 32 = MDIG
+!C
+!        MDIG = 32
+!C
+!C***********************************************************************
+!C
+!C  Be sure that MDIG is at least 16.  If not, a fatal error condition
+!C
+!        IF (MDIG .LT. 16) CALL
+!     AERR_HANDLER(TRIM('FUNCTION RAN --MDIG less than 16'),32,1,2,IERR)
+!        M1 = 2**(MDIG - 2) + (2**(MDIG - 2) - 1)
+!        M2 = 2**(MDIG/2)
+!        Z0 = (1.0D+00)/DBLE(M1)
+!	  JSEED = MIN0(IABS(JD),M1)
+!C
+!C  Check if JSEED is odd.
+!C
+!        IF (MOD(JSEED,2) .EQ. 0) JSEED = JSEED - 1
+!        K0 = MOD(9069,M2)
+!        K1 = 9069/M2
+!        J0 = MOD(JSEED,M2)
+!        J1 = JSEED/M2
+!        DO 4310 I = 1, 17
+!          JSEED = J0*K0
+!          J1 = MOD(JSEED/M2 + J0*K1 + J1*K0, M2/2)
+!          J0 = MOD(JSEED,M2)
+!          M(I) = J0 + M2*J1
+!4310      CONTINUE
+!        I = 5
+!        J = 17
+!      END IF
+!C
+!C  Begin main loop here.
+!C
+!C  First random number, NOT normalized
+!C
+!4320  K = M(I) - M(J)
+!      IF (K .LT. 0) K = K + M1
+!      M(J) = K
+!      I = I - 1
+!      IF (I .EQ. 0) I = 17
+!      J = J - 1
+!      IF (J .EQ. 0) J = 17
+!C     Z1 = DBLE(K)*Z3   ! original
+!	Z1 = DBLE(K)
+!C
+!C  Second random number, normalized
+!C      
+!      K = M(I) - M(J)
+!      IF (K .LT. 0) K = K + M1
+!      M(J) = K
+!      I = I - 1
+!      IF (I .EQ. 0) I = 17
+!      J = J - 1
+!      IF (J .EQ. 0) J = 17
+!C      Z2 = DBLE(K)*Z3    ! original
+!	Z2 = DBLE(K)*Z0
+!C
+!C  Combination random number generator
+!C
+!C  Extend lower range to ~ Z0^2 = .....
+!C
+!	RAN = (Z1 - Z2)*Z0
+!	IF ((RAN .GE. R1) .OR. (RAN .LE. R0)) GOTO 4320
+!      RETURN
+!      END
 C                                                                      *
 C***********************************************************************
 C
@@ -6881,8 +6897,8 @@ C    S              D: parameter related to standard deviation         *
 C    F              D: number (0:1) sampled by uniform distribution    *
 C                                                                      *
 C  Functions and subroutines called                                    *
-C    RAN       :  Random number generator on the interval (0,1].       *
-C                 Assumed initialized by calling routine.              *
+C    RANDOM_NUMBER     Random number generator on the interval (0,1]   *
+C                      Assumed initialized by calling routine.         *
 C                                                                      *
 C  Intrinsic functions called                                          *
 C    SQRT                                                              *
@@ -6892,12 +6908,13 @@ C***********************************************************************
 C                                                                      *
       FUNCTION TRIANGLE(MEAN, STDDEV)
 C
-	DOUBLE PRECISION TRIANGLE, MEAN, STDDEV, S, F, RAN
+	DOUBLE PRECISION TRIANGLE, MEAN, STDDEV, S, F
 C
-	EXTERNAL RAN
+C	EXTERNAL RAN
 C
       S = STDDEV*SQRT(6.0)
-	F = RAN(0)
+        CALL RANDOM_NUMBER(RN)
+	F = RN
 	IF(F.LE.0.5) THEN
 	  TRIANGLE = MEAN - S + S*SQRT(2.0*F)
 	ELSE
@@ -6944,9 +6961,10 @@ C                                                                      *
 C
       DOUBLE PRECISION WEIBULL, MEAN, MODULUS, F, RAN
 C
-      EXTERNAL RAN
-C  F is the Weibull cumulative distribution function      
-	F = RAN(0)
+C      EXTERNAL RAN
+C  F is the Weibull cumulative distribution function  
+        CALL RANDOM_NUMBER(RN)
+	F = RAND(0)
 C
 C  The distributions 1 - F and F are equivalent
 C      WEIBULL = MEAN*DEXP(DLOG(- DLOG(1.0D0 - F))/MODULUS)    ! Original
