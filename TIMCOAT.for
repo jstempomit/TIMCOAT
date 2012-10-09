@@ -1344,8 +1344,6 @@ C
 	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
 	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
 	    END IF
-	     WRITE(*,*) 'HELLO'
-	     STOP
 C    Write headings to stress, strains, and displacement output files
           WRITE(IOUTSR,629) RADIUS
           WRITE(IOUTST,629) RADIUS
@@ -1561,7 +1559,7 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    NBLOCK = BLOCKMAP(1,WHICH_CHN) !Number of blocks in the selected channel
 	    IF ((.NOT.PARAMETRIC_STUDY) .AND. NOMINAL) THEN
  	      WRITE(ITEST, *) OPERTIME, WHICH_CHN, NBLOCK
-          END IF
+            END IF
           PEBBLE_Z = PATH(1,1)        !z-position at the entrance
           PEBBLE_R = PATH(1,2)        !r-position at the entrance
 	    WHICH_BTH = I
@@ -2859,7 +2857,7 @@ C***********************************************************************
 C***********************************************************************
 C                                                                      *
 C                                                                      *
-	ELSE    !PSWITCH = 3
+	ELSE    !PSWITCH = 3   YO YO YO HERE's the problem
 C
 	  DO 1110 K = 0, 5
 	    T_PARTICLE(K) = T_IRR
@@ -3054,7 +3052,6 @@ C
 	    WRITE(IOUTSW,628) ISWT(0), ISWT(1), ISWT(2), ISWT(3)
 	    WRITE(IOUTSW, *)
 	  END IF
-
 C
 C    Begin second time stress analysis with restrained condition
 C    Restore apparent creep strains from last cycle
@@ -3166,6 +3163,7 @@ C    Write to debug file of material strength data
      &			KI1, KI2
 		END IF
 C
+C  !yo yo yo still haven't found the problem 
 C    Create histograms here
           IF(HISTOGRAM) THEN
 C           Particle histogram
@@ -3331,7 +3329,7 @@ C  Gain statistical information on stresses
 	SIGLVARS = SIGLVARS + SIGLSIC**2
 	SIGLVARO = SIGLVARO + SIGLOPYC**2
 C
-1000  CONTINUE  ! End of Monte Carlo Loop: Go get another particle
+1000  CONTINUE  ! End of Monte Carlo Loop: Go get another particle   !YO YO YO THE PROBLEM STARTS AFTER THE FIRST PARTICLE HAS BEEN RUN.
 C  Release memory for data stored arrays
       IF(PSWITCH.EQ.1) THEN
         DEALLOCATE (POWDISTR)
