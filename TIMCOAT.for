@@ -1286,34 +1286,7 @@ C
 C#######################################################################
 C  Main Monte Carlo Loop - sample fuel particles
 C
-C
-      DO 1000 N = 1, NCASES
-C  Sample fuel particles
-C    NOMINAL = .TRUE.  --> The same particle runs NCASES power histories
-C    NOMINAL = .FALSE. --> Sample NCASES particles (NCASES about 1,000,000)
-      IF (NOMINAL) THEN
-        R10 = KERNDIA/X2
-        R20 = R10 + BUFFTHK
-        R30 = R20 + IPYCTHK
-        R40 = R30 + SICTHK
-        R50 = R40 + OPYCTHK
-	  R1 = R10
-	  R2 = R20
-	  R3 = R30
-	  R4 = R40
-	  R5 = R50
-        KDEN = KERND
-        BDEN = BUFFD
-        U235E = U235ENR
-	  IPYCBAF0 = IPYCBAF0I
-	  OPYCBAF0 = OPYCBAF0I
-	  CALL STRENGTH_PYC('IPYC','INI',IPYCD,IPYCBAF0,FLUENCE,T_IRR,
-     &                    SIGT,IPYCF,SIGFIPYCI,IPYCM)
-	  CALL STRENGTH_PYC('OPYC','INI',OPYCD,OPYCBAF0,FLUENCE,T_IRR,
-     &                    SIGT,OPYCF,SIGFOPYCI,OPYCM)
-        CALL STRENGTH_SIC('INI',FLUENCE,T_IRR,SIGT,SICF,
-     &                    SIGFSICI,SICM)
-        KICSICI = SICKIC0
+C  Open output files which will be appended after each cycle in the loop below
 C
         IF(.NOT. PARAMETRIC_STUDY) THEN
 	    IF(PSWITCH.EQ.1) THEN
@@ -1344,6 +1317,37 @@ C
 	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
 	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
 	    END IF
+	 END IF
+C
+      DO 1000 N = 1, NCASES
+C  Sample fuel particles
+C    NOMINAL = .TRUE.  --> The same particle runs NCASES power histories
+C    NOMINAL = .FALSE. --> Sample NCASES particles (NCASES about 1,000,000)
+      IF (NOMINAL) THEN
+        R10 = KERNDIA/X2
+        R20 = R10 + BUFFTHK
+        R30 = R20 + IPYCTHK
+        R40 = R30 + SICTHK
+        R50 = R40 + OPYCTHK
+	  R1 = R10
+	  R2 = R20
+	  R3 = R30
+	  R4 = R40
+	  R5 = R50
+        KDEN = KERND
+        BDEN = BUFFD
+        U235E = U235ENR
+	  IPYCBAF0 = IPYCBAF0I
+	  OPYCBAF0 = OPYCBAF0I
+	  CALL STRENGTH_PYC('IPYC','INI',IPYCD,IPYCBAF0,FLUENCE,T_IRR,
+     &                    SIGT,IPYCF,SIGFIPYCI,IPYCM)
+	  CALL STRENGTH_PYC('OPYC','INI',OPYCD,OPYCBAF0,FLUENCE,T_IRR,
+     &                    SIGT,OPYCF,SIGFOPYCI,OPYCM)
+        CALL STRENGTH_SIC('INI',FLUENCE,T_IRR,SIGT,SICF,
+     &                    SIGFSICI,SICM)
+        KICSICI = SICKIC0
+C
+        IF(.NOT. PARAMETRIC_STUDY) THEN
 C    Write headings to stress, strains, and displacement output files
           WRITE(IOUTSR,629) RADIUS
           WRITE(IOUTST,629) RADIUS
