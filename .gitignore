@@ -2,7 +2,6 @@
 *.mod
 *.exe
 *.obj
-*.dat
 *.out
 *.dbg
 *.prm

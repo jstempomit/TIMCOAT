@@ -40,14 +40,14 @@ C      conditions in real pebble bed reactor environments. Also, it    *
 C      can evaluate the performance of fuel particles with arbitrary   *
 C      power histories.                                                *
 C                                                                      *  
-C  Modified by:                 Jane Diecker							 * 	
-C					Department of Nuclear Engineering				 *
-C				  Massachusetts Institute of Technology              *
-C						 Email: janed@mit.edu                        *
+C                          Modified by:Jane Diecker                    * 	
+C                    Department of Nuclear Engineering                 *
+C                  Massachusetts Institute of Technology               *
+C                         Email: janed@mit.edu                         *
 C                                                                      *
-C  Date: May, 2005													 *	  
-C																	 *
-C  Changes:															 *
+C                            Date: May, 2005                           *	  
+C                                                                      *
+C  Changes:                                                            *
 C  1.  The model now includes fission product attack of the SiC        *	                                                    
 C  2.  The model now accounts for failure due to the amoeba effect     *
 C																	 *
@@ -831,7 +831,6 @@ C  Common blocks
      &			   NCHAR, FMODE, PSTATE, MCODE, FAILUREPATH
 	COMMON /ERRHANDLE/ ERROR_CODE
 	COMMON /OUTPUT/ IKISIC
-
 C      
 C  Functions declared EXTERNAL
 	EXTERNAL BAFI_PYC
@@ -1046,7 +1045,7 @@ C  irradiation experiment simulation, or constant irradiation simulation)
 C
 C	Call PowerTypeDialog(PSWITCH)
 C
-      PSWITCH = 3          !Select reactor power history
+      PSWITCH = 2          !Select reactor power history
                                ! 1 - user provides power distribution
                                ! 2 - user provides power history
                                ! 3 - user doesn't provide power; assume uniform power density
@@ -2861,7 +2860,7 @@ C***********************************************************************
 C***********************************************************************
 C                                                                      *
 C                                                                      *
-	ELSE    !PSWITCH = 3   YO YO YO HERE's the problem
+	ELSE    !PSWITCH choice is important here
 C
 	  DO 1110 K = 0, 5
 	    T_PARTICLE(K) = T_IRR
