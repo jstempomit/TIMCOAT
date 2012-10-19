@@ -1045,7 +1045,7 @@ C  irradiation experiment simulation, or constant irradiation simulation)
 C
 C	Call PowerTypeDialog(PSWITCH)
 C
-      PSWITCH = 2          !Select reactor power history
+      PSWITCH = 1          !Select reactor power history
                                ! 1 - user provides power distribution
                                ! 2 - user provides power history
                                ! 3 - user doesn't provide power; assume uniform power density
