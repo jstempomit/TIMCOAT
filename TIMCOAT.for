@@ -1045,7 +1045,7 @@ C  irradiation experiment simulation, or constant irradiation simulation)
 C
 C	Call PowerTypeDialog(PSWITCH)
 C
-      PSWITCH = 1          !Select reactor power history
+      PSWITCH = 2          !Select reactor power history
                                ! 1 - user provides power distribution
                                ! 2 - user provides power history
                                ! 3 - user doesn't provide power; assume uniform power density
@@ -1127,6 +1127,9 @@ C     Determine the dimension of array of irradiaton history and read in data
      &               'power density and fast flux for the fuel.'
 	ENDIF
       WRITE(ITERM,*)
+                  WRITE(*,*) 'HELLO'
+            STOP
+
 C
 C  In order to perform parametric study, place the flag PARAMETRIC_STUDY as true
 	PARAMETRIC_STUDY = .FALSE.
