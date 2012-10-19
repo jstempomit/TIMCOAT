@@ -1095,10 +1095,14 @@ C     Assign arrays for particle history card and history stresses
 	  ALLOCATE (HSIGR(0:NAXIAL,1:NDIV))
 	  ALLOCATE (HSIGT(0:NAXIAL,1:NDIV))
       ELSE IF(PSWITCH .EQ. 2) THEN
-        WRITE(ITERM,*) ' Please enter the filename (Omit .dat) ',
-     &				 ' for the irradiation history: '
+        WRITE(ITERM,*) ' Please enter the filename ',
+     &		       ' for the irradiation history ',
+     &                 '(include .dat extension): '
+C     (Omit .dat)
        READ(IKEY,602) INPFILE3
        FILESTAT = 'OLD'
+C       WRITE(*,*) 'HELLO'
+C            STOP
        OPEN(FILE = INPFILE3,STATUS = FILESTAT,UNIT = IDAT3, 
      &     IOSTAT=INPSTATUS)
         FOPEN3 = .TRUE.
@@ -1127,9 +1131,6 @@ C     Determine the dimension of array of irradiaton history and read in data
      &               'power density and fast flux for the fuel.'
 	ENDIF
       WRITE(ITERM,*)
-                  WRITE(*,*) 'HELLO'
-            STOP
-
 C
 C  In order to perform parametric study, place the flag PARAMETRIC_STUDY as true
 	PARAMETRIC_STUDY = .FALSE.
