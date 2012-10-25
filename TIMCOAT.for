@@ -1000,7 +1000,7 @@ C
 C
 C  Reactor core and TRISO fuel input data dialog boxes
 C 115	Call InputDialog(INPFILE1)
-      INPFILE1='v2_inp_diecker.dat'
+      INPFILE1='mpbr2_inp_jingthesis.dat'
 	FILESTAT = 'OLD'
       OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
      &     IOSTAT=INPSTATUS)
@@ -1045,7 +1045,7 @@ C  irradiation experiment simulation, or constant irradiation simulation)
 C
 C	Call PowerTypeDialog(PSWITCH)
 C
-      PSWITCH = 2          !Select reactor power history
+      PSWITCH = 1          !Select reactor power history
                                ! 1 - user provides power distribution
                                ! 2 - user provides power history
                                ! 3 - user doesn't provide power; assume uniform power density
