@@ -1000,7 +1000,7 @@ C
 C
 C  Reactor core and TRISO fuel input data dialog boxes
 C 115	Call InputDialog(INPFILE1)
-      INPFILE1='mpbr2_inp_jingthesis.dat'
+      INPFILE1='MS_MPBR1.dat'
 	FILESTAT = 'OLD'
       OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
      &     IOSTAT=INPSTATUS)
