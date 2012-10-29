@@ -1000,7 +1000,7 @@ C
 C
 C  Reactor core and TRISO fuel input data dialog boxes
 C 115	Call InputDialog(INPFILE1)
-      INPFILE1='MS_MPBR1.dat'
+      INPFILE1='PBMR_DS.dat'
 	FILESTAT = 'OLD'
       OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
      &     IOSTAT=INPSTATUS)
@@ -1024,6 +1024,7 @@ C
      &					34,IMSG,2,IERR)
 	END IF
 C
+      USERSEED = .FALSE.
       IF (NCASES .EQ. 0) STOP  ! Detect null set input, END program
 C
 	IF (.NOT. USERSEED) ISEED = INITSEED(0)
