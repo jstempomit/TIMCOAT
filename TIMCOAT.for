@@ -570,7 +570,7 @@ C
 C************************************************************************
 C                                                                       *
 C  Main program starts
-C
+C           
       PROGRAM TIMCOAT
       INCLUDE 'link_fnl_static.h'
       !DEC$ OBJCOMMENT LIB:'libiomp5md.lib'
@@ -645,7 +645,7 @@ C  13. Fission Product Attack Variables
 C  14. Amoeba Effect Variables
       DOUBLE PRECISION MD, AVGT, TGRAD, KMC
 C  Other variables
-      DOUBLE PRECISION NA        !Avagadro Number
+      DOUBLE PRECISION NA        !Avogadro Number
       DOUBLE PRECISION TIME, TIME0, ELAPTIME
 	DOUBLE PRECISION TIMELIMIT, SIG_UPPER, SIG_LOWER
 	DOUBLE PRECISION PARASET(1:2, 1:4), SIGXIPYCX, SIGXIPYCM,
@@ -931,7 +931,7 @@ C
      &				  PARFAIL
 C
 C  Version data
-      DATA VERSION /'v 1.0   '/     ! February 08, 2004
+      DATA VERSION /'v 2.0   '/     ! May 2005
       DATA STATUS  /'DEBUG'/
       DATA CTIME   /'        '/, CDATE/'        '/
 C  Numerical constants
@@ -1046,7 +1046,8 @@ C  Run TIMCOAT as Version 1 or as Version 2
 C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
       WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
       READ(IKEY,*) VERSIONSWITCH
-C      
+C
+C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
 C
@@ -1292,6 +1293,7 @@ C  stress distributions across the structural layers
       NDIVI = (NDIV-6)/3        ! Reserve 6 points for layer surfaces (IPyC/SiC/OPyC)
 	NDIVS = (NDIV-6-NDIVI)/2
 	NDIVO = NDIV-6-NDIVI-NDIVS
+C
 C
 C#######################################################################
 C  Main Monte Carlo Loop - sample fuel particles
@@ -1656,8 +1658,8 @@ C    Calculate temperature distribution in particles
 		  CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
 	      HCARD(TIMESTEP,15) = PRESS
 C	      
-C  Have switch to turn on or off v.2
-C  Calculate the kernel migration distance if v.2 is on				
+C  Switch to run TIMCOAT as v.1 or v.2
+C  Calculate the kernel migration distance if v.2 is on (VERSIONSWITCH = 2):				
       IF (VERSIONSWITCH .EQ. 1)  THEN
 	   KMC = 0.0D0
            DCORR = 0.0D0
@@ -3555,39 +3557,45 @@ C  Write the debug file various info. after the calculation
 		WRITE(IDBG, *) 'End of debug file.'
 	END IF
 C
-      TIME = 0
-	MACHTIME = TIME
-	WRITE(ITERM,*)
-	IF (TIME .LT. 60.0) THEN
-	  WRITE(ITERM,*) 'Elapsed calculation time: ',TIME,' seconds'
-	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
-	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/60.0),
-     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
-	ELSE IF (TIME .GT. 3600.0) THEN
-	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/3600.0),
-     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
-     A                 'minutes and ',MOD(MOD(INT(TIME),3600),60),
-     A                 'seconds'
-	END IF
-	WRITE(ITERM,*)
+C  Comment out the original time statements because they do not work.
+C      TIME = 0
+C	MACHTIME = TIME
+C	WRITE(ITERM,*)
+C	IF (TIME .LT. 60.0) THEN
+C	  WRITE(ITERM,*) 'Elapsed calculation time: ',TIME,' seconds'
+C	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
+C	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/60.0),
+C     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
+C	ELSE IF (TIME .GT. 3600.0) THEN
+C	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/3600.0),
+C     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
+C     A                 'minutes and ',MOD(MOD(INT(TIME),3600),60),
+C     A                 'seconds'
+C	END IF
 C
-C
+C  Print the elapsed CPU time to the terminal
+      CPUTIME = MCLOCK()
+      WRITE(ITERM,*)
+      WRITE(ITERM,*)'Elapsed calculation time (sec):', CPUTIME/1000
+      WRITE(ITERM,*)
+C  Print the number of particles per second to the terminal
+	WRITE(ITERM,*)
 	WRITE(ITERM,*) 'Average number of particles per second = ',
-     A                FLOAT(NCASES)/MAX(TIME, 1.0 D0)
+     A                FLOAT(NCASES)/(CPUTIME/1000)
 	WRITE(ITERM,*)
-
-	WRITE(IOUT,*)
-	IF (TIME .LT. 60.0) THEN
-	  WRITE(IOUT,*) 'Elapsed calculation time: ',TIME,' seconds'
-	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
-	  WRITE(IOUT,*) 'Elapsed calculation time: ',INT(TIME/60.0),
-     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
-	ELSE IF (TIME .GT. 3600.0) THEN
-	  WRITE(IOUT,*) 'Elapsed calcuation time: ',INT(TIME/3600.0),
-     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
-     A                 'minutes and', MOD(MOD(INT(TIME),3600),60),
-     A                 'seconds'
-	END IF
+C
+C	WRITE(IOUT,*)
+C	IF (TIME .LT. 60.0) THEN
+C	  WRITE(IOUT,*) 'Elapsed calculation time: ',TIME,' seconds'
+C	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
+C	  WRITE(IOUT,*) 'Elapsed calculation time: ',INT(TIME/60.0),
+C     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
+C	ELSE IF (TIME .GT. 3600.0) THEN
+C	  WRITE(IOUT,*) 'Elapsed calcuation time: ',INT(TIME/3600.0),
+C     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
+C     A                 'minutes and', MOD(MOD(INT(TIME),3600),60),
+C     A                 'seconds'
+C	END IF
 	WRITE(IOUT,*)
 	WRITE(IOUT,*) '======================= Statistical Report ',
      &              '======================='
