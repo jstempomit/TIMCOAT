@@ -377,7 +377,7 @@ C  R43         R*8      M  : Cube of R4  [microns^3]
 C  R5          R*8      V  : Actual OPyC outer radius [microns]
 C  R53         R*8      M  : Cube of R5  [microns^3]
 C  RADIUS      R*8      M  : Position in the layers of particles
-C  RAND         R*8      F  : Random number generator
+C  RAND        R*8      F  : Random number generator
 C  RNCASES     R*8      M  : Number of cases (NCASES) as a REAL*8
 C  RRNCASES    R*8      M  : Reciprocal of RNCASES
 C  RUNIRR      C*8      I  : Treatments during irradiation
@@ -1024,8 +1024,9 @@ C
      &					34,IMSG,2,IERR)
 	END IF
 C
-      USERSEED = .FALSE.
       IF (NCASES .EQ. 0) STOP  ! Detect null set input, END program
+C
+C
 C
 	IF (.NOT. USERSEED) ISEED = INITSEED(0)
 C
@@ -1294,12 +1295,12 @@ C  stress distributions across the structural layers
 C
 C#######################################################################
 C  Main Monte Carlo Loop - sample fuel particles
+C       
 C
 C  Open output files which will be appended after each cycle in the loop below
-C
-        IF(.NOT. PARAMETRIC_STUDY) THEN
+      IF(.NOT. PARAMETRIC_STUDY) THEN
 	    IF(PSWITCH.EQ.1) THEN
-  	      OPEN(FILE='test    '//'.out',STATUS="REPLACE",UNIT=ITEST)
+	      OPEN(FILE='test    '//'.out',STATUS="REPLACE",UNIT=ITEST)
 	      OPEN(FILE='out_core'//'.dat',STATUS="REPLACE",UNIT=IOUTR)
 	       WRITE(IOUTR,637) 
 	      OPEN(FILE='out_temp'//'.dat',STATUS="REPLACE",UNIT=IOUTT)
@@ -1326,7 +1327,7 @@ C
 	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
 	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
 	    END IF
-	 END IF
+      END IF
 C
       DO 1000 N = 1, NCASES
 C  Sample fuel particles
@@ -1356,8 +1357,8 @@ C    NOMINAL = .FALSE. --> Sample NCASES particles (NCASES about 1,000,000)
      &                    SIGFSICI,SICM)
         KICSICI = SICKIC0
 C
-        IF(.NOT. PARAMETRIC_STUDY) THEN
-C    Write headings to stress, strains, and displacement output files
+      IF(.NOT. PARAMETRIC_STUDY) THEN
+C         Write headings to stress, strains, and displacement output files
           WRITE(IOUTSR,629) RADIUS
           WRITE(IOUTST,629) RADIUS
           WRITE(IOUTER,642) RADIUS
