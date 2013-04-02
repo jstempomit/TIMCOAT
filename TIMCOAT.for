@@ -1044,22 +1044,28 @@ C
 C
 C  Run TIMCOAT as Version 1 or as Version 2
 C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
-      WRITE(ITERM,*) 'Turn on fission product attack of SiC and amoeba effect? (no = 1, yes = 2)'
+      WRITE(ITERM,*) 'Turn on fission product attack of SiC and amoeba',
+     &                    ' effect? (no = 1, yes = 2)'
       READ(IKEY,*) VERSIONSWITCH
 C
 C  Select coolant type:  1 = Helium, 2 = Li2BeF4 (flibe)
-      WRITE(ITERM,*) 'Use Helium or flibe (Li2BeF4) coolant? (He = 1, flibe = 2)'
+      WRITE(ITERM,*) 'Use Helium or flibe (Li2BeF4) coolant?',
+     &                   ' (He = 1, flibe = 2)'
       READ(IKEY,*) CSWITCH
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
-C
-C	Call PowerTypeDialog(PSWITCH)
-C
-      PSWITCH = 1          !Select reactor power history
-                               ! 1 - user provides power distribution
-                               ! 2 - user provides power history
-                               ! 3 - user doesn't provide power; assume uniform power density
+C  Choose reactor power history by setting PSWITCH equal to 1 or 2 or 3.
+C                  1 - user provides power distribution
+C                  2 - user provides power history
+C                  3 - user doesn't provide power; assume uniform power density
+      WRITE(ITERM,*) 'Select reactor power history:',
+     &                 ' 1 = User provides power distribution',
+     &                 ' 2 = User provides power history',
+     &                 ' 3 = Assume uniform power density, user does',
+     &                 ' not provide power'
+      READ(IKEY,*) PSWITCH
+C          
       IF(PSWITCH .EQ. 1) THEN
 	  WRITE(ITERM,*) ' Is it from new or old core model?',
      &				 ' Please choose a number (new = 1, old = 2):'
@@ -1112,8 +1118,7 @@ C     Assign arrays for particle history card and history stresses
 C     (Omit .dat)
        READ(IKEY,602) INPFILE3
        FILESTAT = 'OLD'
-C       WRITE(*,*) 'HELLO'
-C            STOP
+C
        OPEN(FILE = INPFILE3,STATUS = FILESTAT,UNIT = IDAT3, 
      &     IOSTAT=INPSTATUS)
         FOPEN3 = .TRUE.
