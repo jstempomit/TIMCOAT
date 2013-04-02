@@ -1044,9 +1044,12 @@ C
 C
 C  Run TIMCOAT as Version 1 or as Version 2
 C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
-      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
+      WRITE(ITERM,*) 'Turn on fission product attack of SiC and amoeba effect? (no = 1, yes = 2)'
       READ(IKEY,*) VERSIONSWITCH
 C
+C  Select coolant type:  1 = Helium, 2 = Li2BeF4 (flibe)
+      WRITE(ITERM,*) 'Use Helium or flibe (Li2BeF4) coolant? (He = 1, flibe = 2)'
+      READ(IKEY,*) CSWITCH
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
