@@ -645,7 +645,7 @@ C  13. Fission Product Attack Variables
 C  14. Amoeba Effect Variables
       DOUBLE PRECISION MD, AVGT, TGRAD, KMC
 C  Other variables
-      DOUBLE PRECISION NA        !Avogadro Number
+      DOUBLE PRECISION NA        !Avogadro's Number
       DOUBLE PRECISION TIME, TIME0, ELAPTIME
 	DOUBLE PRECISION TIMELIMIT, SIG_UPPER, SIG_LOWER
 	DOUBLE PRECISION PARASET(1:2, 1:4), SIGXIPYCX, SIGXIPYCM,
@@ -655,6 +655,7 @@ C  Other variables
      &		  PARFAIL0, IPYCFAIL0, SICFAIL0, OPYCFAIL0, FAILTYPE,
      &          NBURP, NCASES, NDUMPED, LENGTH_OF_FILE, I, J, K, N
 	INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
+	INTEGER   CSWITCH
 	INTEGER   IKISIC, CORR  
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
 	INTEGER   NCHANNEL, NAXIAL, NLAYER
@@ -1028,7 +1029,7 @@ C
 C
 C
 C
-	IF (.NOT. USERSEED) ISEED = INITSEED(0)
+      IF (.NOT. USERSEED) ISEED = INITSEED(0)
 C
 C  Initialize random number generator with ISEED
 C
@@ -1590,7 +1591,7 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    TIMESTEP = 0
 	    FLUENCE_R = 0.0D0
 	    T_HE = T_GASIN
-          CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE)  !Reset T_PARTICLE at the entrance
+          CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
 C    Calculate the total power of this channel for the purpose of scaling He temp.
           P_CHANNEL = 0.0D0
           DO 230 J = 1, NBLOCK
@@ -1656,7 +1657,7 @@ C    Determine current burnup
      &                          (T_GASOUT-T_GASIN)/P_CHANNEL
 	      T_HE = HCARD(TIMESTEP,8)
 C    Calculate temperature distribution in particles
-            CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)  !calculate T distribution
+            CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !calculate T distribution
 	      HCARD(TIMESTEP,9)  = T_PARTICLE(0)
 	      HCARD(TIMESTEP,10)  = T_PARTICLE(1)
 	      HCARD(TIMESTEP,11) = T_PARTICLE(2)
@@ -3221,7 +3222,7 @@ C    Write to debug file of material strength data
      &			KI1, KI2
 		END IF
 C
-C  !yo yo yo still haven't found the problem 
+C  
 C    Create histograms here
           IF(HISTOGRAM) THEN
 C           Particle histogram
@@ -5281,12 +5282,12 @@ C
 C
 C
 C***********************************************************************
-C  Subroutine TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)              *
+C  Subroutine TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)     *
 C                                                                      *
 C    This subroutine calculates the temperature distribution through   *
 C  the fuel particles.                                                 *
 C    Notes:                                                            *
-C  1.  Call TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE) for           *
+C  1.  Call TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH) for  *
 C    initialization.                                                   * 
 C  2.  Currently there is no gap considered in the model               *
 C                                                                      *
@@ -5424,7 +5425,7 @@ C***********************************************************************
 C
 C***********************************************************************
 C                                                                      *
-      SUBROUTINE TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)
+      SUBROUTINE TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)
 C
 	DOUBLE PRECISION QPPP, T_HE, BURNUP, T_PARTICLE
 C  Core parameters
@@ -5450,7 +5451,7 @@ C  Helium thermal properties
      &                 RE_HE, PR_HE, H_HE
 C  Others
 	DOUBLE PRECISION T, R
-	INTEGER*4 NPEBBLE, NPARTICLE
+	INTEGER*4 NPEBBLE, NPARTICLE, CSWITCH
       INTEGER   ERROR_CODE, INDEX, I
       CHARACTER*3  FUELTYPE
 C
@@ -5624,14 +5625,26 @@ C   Thermal conductivity of matrix graphite is from Kania and Nickel; temperatur
 	K_PFM = 47.4D0*(1.0D0-9.7556D-4*(T-100.0D0)*DEXP(-6.036D-4*T))
       T = (T_PEBBLE(1)+T_PEBBLE(2))/2.0D0
 	K_PM = 47.4D0*(1.0D0-9.7556D-4*(T-100.0D0)*DEXP(-6.036D-4*T))
-C   Heat transfer coefficient of He is calculated using Achenbach Correlation.
+C      
       PEBDIAMETER = 2.0D0*PEBRADIUS
+C
+      IF (CSWITCH .EQ. 1) THEN
+C   Heat transfer coefficient of He is calculated using Achenbach Correlation.  See page 44 of Jing Wang thesis
       VC_HE = MF_HE/(D_HE*A_CORE*(1.0D0-PACKING)) !Characteristic velocity of He
       RE_HE = D_HE*PEBDIAMETER*VC_HE/MU_HE        !Reynold's number of He
       PR_HE = MU_HE*CP_HE/K_HE                    !Prandtl number of He
 	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
      &       (((1.18D0*RE_HE**0.58D0)**4.0D0+
      &         (0.23D0*RE_HE**0.75D0)**4.0D0)**0.25D0)
+      ELSE
+C  Heat transfer coefficient of flibe is calculated for a packed bed using XXXXX correlation
+C      VC_FLIBE = MF_FLIBE/(D_FLIBE*A_CORE*(1.0D0-PACKING))          !Characteristic velocity of flibe
+C      RE_FLIBE = D_FLIBE*PEBDIAMETER*VC_FLIBE/MU_FLIBE        !Reynold's number of flibe
+C      PR_FLIBE = MU_FLIBE*CP_FLIBE/K_FLIBE                    !Prandtl number of flibe
+C      	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
+C     &       (((1.18D0*RE_FLIBE**0.58D0)**4.0D0+
+C     &         (0.23D0*RE_FLIBE**0.75D0)**4.0D0)**0.25D0)
+      END IF
 C   Average K of pebble fuel zone
       K_PFZ = ((V_FUEL*K_FUEL+V_BUFFER*K_BUFFER+V_IPYC*K_IPYC+
      &         V_SIC*K_SIC+V_OPYC*K_OPYC)*NPARTICLE+V_PFM*K_PFM)/V_PFZ
