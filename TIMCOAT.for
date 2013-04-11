@@ -108,6 +108,11 @@ C  COMP        C*3      C  : Compiler type
 C  CORE_HEIGHT R*8      I  : Height of reactor core [m]
 C  CORE_RADIUS R*8      I  : Radius of reactor core [m]
 C  COREMODEL   I*4      V  : Indicating whether new or old VSOP core model is employed
+C  CSWITCH     I*4      M  : Selects coolant type.  1 = He; 2 = flibe (Li2BeF4)
+C                                Option to add additional coolant types by defining additional
+C                                CSWITCH integers.  Variable names then remain the same, and 
+C                                CSWITCH can call upon material databases specific to the desired 
+C                                coolant.
 C  CTIME       C*8      M  : Time format HH/MM/SS
 C  CURAT       R*8      I  : Carbon to Uranium atom ratio
 C  CV          R*8      P  : Numerical constant (4/3) Pi X 10^-12
@@ -278,6 +283,7 @@ C							'SO2' : SiC/OPyC two-layer analysis
 C							'S1'  : SiC single-layer analysis
 C  MD          R*8      M  : Kernel migration distance 
 C  MF_HE       R*8      I  : Mass flow rate of Helium [kg/s]
+C  MF_SALT     R*8      I  : Mass flow rate of salt [kg/s]
 C  MOLES       R*8      V  : Moles of gas in particle [gm-mol]
 C  MOLESU      R*8      V  : Moles of uranium in kernel [gm-mol]
 C  N           I*4      M  : Current case (particle) number  (1..NCASES)
@@ -485,6 +491,9 @@ C  T_PARTICLE  R*8      V  : Temperature distribution in the particles (C)
 C                            T_PARTICLE(0) is the value at the center of fuel
 C                            T_PARTICLE(1-5) correspond to the values at R1-R5, respectively.
 C  TEMPERORY   R*8      M  : Variable for temperory usage
+C  T_SALT      R*8      V  : Bulk salt coolant temperature [C]
+C                               If CSWITCH = 2 salt coolant = flibe (Li2BeF4)
+C                               Option is to have CSWITCH > 2 for other types of salts
 C  TGRAD       R*8      M  : Temperature gradient in paticle (K/m)
 C  T_HE        R*8      V  : Bulk Helium temperature [C]
 C  TIME        R*4      S  : Elapsed wall clock time [sec]
@@ -494,6 +503,8 @@ C  TIMESTEP    I*4      M  : Time step in the channel
 C  TIMESTEP_A  I*4      M  : Accumulative time step used for registering
 C                            variables in the history card -- HCARD
 C  TITLE       C*40     I  : Input set descriptive title
+C  T_SALTIN    R*8      P  : Salt coolant entry temperature [C]
+C  T_SALTOUT   T*8      P  : Salt coolant exit temperature [C]
 C  TRIANGLE    R*8      F  : Function which generates triangular distribution
 C  U235E       R*8      V  : Actual U235 enrichment [%]
 C  U235ENR     R*8      I  : U235 Enrichment [%]
@@ -581,10 +592,11 @@ C
       IMPLICIT INTEGER*4 (I-N)
 C  1. Reactor specifications
       DOUBLE PRECISION EOLBUP, EOLFLU, POWER, QPPP_AVG, QPPP, T_HE,
-     &                 DT, OUTTIME, IRRTIME,
+     &                 DT, OUTTIME, IRRTIME, T_SALT,
      &                 PEBBLE_R, PEBBLE_Z, P_CHANNEL, P_BLOCK, P_PAR
 	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_GASIN,
-     &                 T_GASOUT, MF_HE, PACKING
+     &                 T_GASOUT, MF_HE, MF_SALT, PACKING, T_SALTIN, 
+     &                   T_SALTOUT
 	DOUBLE PRECISION PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                 R_IN_PEBBLE
 C  2. Particle geometry
@@ -812,7 +824,8 @@ C
 C  Common blocks
       COMMON /MTYPE/ MACH, COMP   !Common block used by date and timing routines
       COMMON /PBED/  CORE_HEIGHT, CORE_RADIUS, P_CORE, T_GASIN, 
-     &               T_GASOUT, MF_HE, PACKING, NPEBBLE
+     &               T_GASOUT, MF_HE, PACKING, NPEBBLE, T_SALTIN,
+     &               T_SALTOUT
       COMMON /PEBBLE/ PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                R_IN_PEBBLE, NPARTICLE
       COMMON /PAR_R0/ R10, R20, R30, R40, R50   !initial particle geometry
@@ -1590,8 +1603,13 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    WHICH_BTH = I
 	    TIMESTEP = 0
 	    FLUENCE_R = 0.0D0
-	    T_HE = T_GASIN
-          CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
+      IF(CSWITCH.EQ.1) THEN	    
+	  T_HE = T_GASIN
+	  CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
+      ELSE
+          T_SALT = T_SALTIN
+          CALL TEMPERATURE(0.0D0, T_SALT, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
+      END  IF      
 C    Calculate the total power of this channel for the purpose of scaling He temp.
           P_CHANNEL = 0.0D0
           DO 230 J = 1, NBLOCK
@@ -1653,11 +1671,21 @@ C    Determine current burnup
      &			 WHICH_BTH, 4)   !pick out power at that position
 	      HCARD(TIMESTEP,6) = QPPP
 	      HCARD(TIMESTEP,7) = BURNUP
+      IF (CSWITCH.EQ.1) THEN	      
             HCARD(TIMESTEP,8) = T_HE + HCARD(TIMESTEP,8)*
      &                          (T_GASOUT-T_GASIN)/P_CHANNEL
 	      T_HE = HCARD(TIMESTEP,8)
+      ELSE
+            HCARD(TIMESTEP,8) = T_SALT + HCARD(TIMESTEP,8)*
+     &                          (T_SALOUT-T_SALTIN)/P_CHANNEL
+	      T_SALT = HCARD(TIMESTEP,8)
+      END IF	      
 C    Calculate temperature distribution in particles
-            CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !calculate T distribution
+      IF (CSWITCH .EQ. 1) THEN
+         CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !calculate T distribution
+      ELSE
+         CALL TEMPERATURE(QPPP, T_SALT, BURNUP, T_PARTICLE, CSWITCH)  !calculate T distribution
+      END IF      
 	      HCARD(TIMESTEP,9)  = T_PARTICLE(0)
 	      HCARD(TIMESTEP,10)  = T_PARTICLE(1)
 	      HCARD(TIMESTEP,11) = T_PARTICLE(2)
@@ -5299,7 +5327,8 @@ C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
 C    QPPP (W/m^3)   D: Current power density                           *
-C    T_HE (C)       D: Current Helium temperature                      *
+C    T_HE (C)       D: Current Helium temperature (if CSWITCH = 1)     *
+C    T_SALT  (C)    D: Current salt temperature (if CSWITCH = 2 +)     *
 C    BURNUP (FIMA)  D: Current burnup of the pebble                    *
 C    T_PARTICLE(0:5) D: (returned arguments)                           *
 C                      Temperature distribution in the particles       *
@@ -5314,7 +5343,10 @@ C    CORE_RADIUS(m) D: Radius of reactor core                          *
 C    P_CORE (MWth)  D: Thermal power of reactor                        *
 C    T_GASIN (C)    D: Coolant (He) entry temperature                  *
 C    T_GASOUT (C)   D: Coolant (He) exit temperature                   *
+C    T_SALTIN (C)   D: Salt coolant entry temperature                  *
+C    T_SALTOUT (C)  D: Salt coolant exit temperature                   *
 C    MF_HE (kg/s)   D: Mass flow rate of Helium                        *
+C    MF_SALT (kg/s) D: Mass flow rate of salt coolant                  *
 C    PACKING        D: Packing fraction of pebbles in the reactor core *
 C    NPEBBLE        I: Number of pebbles in the reactor core           *
 C  /PEBBLE/ : pebble parameters                                        *
@@ -5395,6 +5427,12 @@ C                      HE_THERMAL(:,0) (C): temperature                *
 C                      HE_THERMAL(:,1) (W/m.K): thermal conductivity   *
 C                      HE_THERMAL(:,2) (kg/m^3): density               *
 C                      HE_THERMAL(:,3) (kg/m.s): viscosity             *
+C    FLIBE_THERMAL  D: Array storing thermal properties of flibe       *
+C                      FLIBE_THERMAL(:,0) (C): temperature             *
+C                      FLIBE_THERMAL(:,1) (W/m.K): thermal conductivity*
+C                      FLIBE_THERMAL(:,2) (kg/m^3): density            *
+C                      FLIBE_THERMAL(:,3) (kg/m.s): viscosity          *
+C                                                                      *
 C    CP_HE (J/kg.K) D: Specific heat of Helium                         *
 C    D_HE (kg/m^3)  D: Density of Helium                               *
 C    K_HE (W/m.K)   D: Thermal conductivity of Helium                  *
@@ -5403,6 +5441,15 @@ C    VC_HE (m/s)    D: Characteristic velocity of Helium flow          *
 C    RE_HE          D: Reynold's number of He                          *
 C    PR_HE          D: Prandtl number of He                            *
 C    H_HE (W/m^2.K) D: Heat transfer coefficient of He                 *
+C                                                                      *
+C    CP_FLIBE (J/kg.K) D: Specific heat of flibe                       *
+C    D_FLIBE (kg/m^3)  D: Density of flibe                             *
+C    K_FLIBE (W/m.K)   D: Thermal conductivity of flibe                *
+C    MU_FLIBE (kg/m.s) D: Viscosity of flibe                           *
+C    VC_FLIBE (m/s)    D: Characteristic velocity of flibe flow        *
+C    RE_FLIBE          D: Reynold's number of flibe                    *
+C    PR_FLIBE          D: Prandtl number of flibe                      *
+C    H_FLIBe (W/m^2.K) D: Heat transfer coefficient of flibe           *
 C                                                                      *
 C  Others                                                              *
 C    T (C)          D: temporary temperature                           *
@@ -5430,7 +5477,8 @@ C
 	DOUBLE PRECISION QPPP, T_HE, BURNUP, T_PARTICLE
 C  Core parameters
 	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, A_CORE, V_CORE,
-     &                 P_CORE, T_GASIN, T_GASOUT, MF_HE, PACKING
+     &                 P_CORE, T_GASIN, T_GASOUT, MF_HE, PACKING,
+     &                 T_SALTIN, T_SALTOUT
 C  Pebble related variables
 	DOUBLE PRECISION PEBRADIUS, PEBDIAMETER, PFZRADIUS, V_PEBBLE,
      &                 V_PFZ, V_PFM, V_PM, Q_PFZ, K_PM, K_PFM, K_PFZ,
@@ -5512,13 +5560,15 @@ C  First time run: initialize arrays storing temperature profiles
 3120    CONTINUE
         RETURN
 	END IF
+C	
 C  Modeling begins here ...
 C
+      IF (CSWITCH.EQ.1) THEN
 C  Thermal properties for coolant He (from A. F. Mills)
       CP_HE = 5200.0D0                                                 ! J/kg.K
       CALL LOCATE_ARRAY(HE_THERMAL(:,0), 7, 1, T_HE, INDEX)
-	IF (INDEX .EQ. 0) INDEX = INDEX + 1   !exceeds lowerbound; make adjustion.
-      IF (INDEX .EQ. 7) INDEX = INDEX - 1   !exceeds upperbound; make adjustion.
+      IF (INDEX .EQ. 0) INDEX = INDEX + 1   !exceeds lowerbound; make adjustment.
+      IF (INDEX .EQ. 7) INDEX = INDEX - 1   !exceeds upperbound; make adjustment.
       K_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,1)         ! W/m.K
      &        +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,1))
      &       /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
@@ -5529,6 +5579,22 @@ C  Thermal properties for coolant He (from A. F. Mills)
      &         +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,3))
      &        /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
 C
+      ELSE
+C  Thermal properties for coolant flibe come from a series of references
+C      CP_HE = 5200.0D0                                                 ! J/kg.K
+C      CALL LOCATE_ARRAY(HE_THERMAL(:,0), 7, 1, T_HE, INDEX)
+C      IF (INDEX .EQ. 0) INDEX = INDEX + 1   !exceeds lowerbound; make adjustment.
+C      IF (INDEX .EQ. 7) INDEX = INDEX - 1   !exceeds upperbound; make adjustment.
+C      K_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,1)         ! W/m.K
+C     &        +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,1))
+C     &       /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
+C      D_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,2)         ! kg/m^3
+C     &        +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,2))
+C     &       /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
+C      MU_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,3)        ! kg/m.s
+C     &         +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,3))
+C     &        /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
+     END IF
 C  TRISO fuel geometries, including calculation of fuel swelling
       V_PARTICLE = 4.0D0*PIE*R5**3*1.0D-18/3.0D0
       V_FUEL = 4.0D0*PIE*R10**3/3.0D0
@@ -5630,18 +5696,18 @@ C
 C
       IF (CSWITCH .EQ. 1) THEN
 C   Heat transfer coefficient of He is calculated using Achenbach Correlation.  See page 44 of Jing Wang thesis
-      VC_HE = MF_HE/(D_HE*A_CORE*(1.0D0-PACKING)) !Characteristic velocity of He
-      RE_HE = D_HE*PEBDIAMETER*VC_HE/MU_HE        !Reynold's number of He
-      PR_HE = MU_HE*CP_HE/K_HE                    !Prandtl number of He
+      VC_HE = MF_HE/(D_HE*A_CORE*(1.0D0-PACKING))                       !Characteristic velocity of He
+      RE_HE = D_HE*PEBDIAMETER*VC_HE/MU_HE                              !Reynold's number of He
+      PR_HE = MU_HE*CP_HE/K_HE                                          !Prandtl number of He
 	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
      &       (((1.18D0*RE_HE**0.58D0)**4.0D0+
      &         (0.23D0*RE_HE**0.75D0)**4.0D0)**0.25D0)
       ELSE
 C  Heat transfer coefficient of flibe is calculated for a packed bed using XXXXX correlation
-C      VC_FLIBE = MF_FLIBE/(D_FLIBE*A_CORE*(1.0D0-PACKING))          !Characteristic velocity of flibe
-C      RE_FLIBE = D_FLIBE*PEBDIAMETER*VC_FLIBE/MU_FLIBE        !Reynold's number of flibe
-C      PR_FLIBE = MU_FLIBE*CP_FLIBE/K_FLIBE                    !Prandtl number of flibe
-C      	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
+C      VC_FLIBE = MF_SALT/(D_FLIBE*A_CORE*(1.0D0-PACKING))          !Characteristic velocity of flibe
+C      RE_FLIBE = D_FLIBE*PEBDIAMETER*VC_FLIBE/MU_FLIBE             !Reynold's number of flibe
+C      PR_FLIBE = MU_FLIBE*CP_FLIBE/K_FLIBE                         !Prandtl number of flibe
+C      	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*           ! W/m^2.K
 C     &       (((1.18D0*RE_FLIBE**0.58D0)**4.0D0+
 C     &         (0.23D0*RE_FLIBE**0.75D0)**4.0D0)**0.25D0)
       END IF
