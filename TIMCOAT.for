@@ -1604,11 +1604,11 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    TIMESTEP = 0
 	    FLUENCE_R = 0.0D0
       IF(CSWITCH.EQ.1) THEN	    
-	  T_HE = T_GASIN
-	  CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
+	 T_HE = T_GASIN
+	 CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
       ELSE
-          T_SALT = T_SALTIN
-          CALL TEMPERATURE(0.0D0, T_SALT, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
+         T_SALT = T_SALTIN
+         CALL TEMPERATURE(0.0D0, T_SALT, BURNUP, T_PARTICLE, CSWITCH)  !Reset T_PARTICLE at the entrance
       END  IF      
 C    Calculate the total power of this channel for the purpose of scaling He temp.
           P_CHANNEL = 0.0D0
@@ -2940,7 +2940,7 @@ C***********************************************************************
 C***********************************************************************
 C                                                                      *
 C                                                                      *
-	ELSE    !PSWITCH choice is important here
+	ELSE    !PSWITCH = 3
 C
 	  DO 1110 K = 0, 5
 	    T_PARTICLE(K) = T_IRR
@@ -5310,13 +5310,13 @@ C
 C
 C
 C***********************************************************************
-C  Subroutine TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)     *
+C  Subroutine TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE, CSWITCH)*
 C                                                                      *
 C    This subroutine calculates the temperature distribution through   *
 C  the fuel particles.                                                 *
 C    Notes:                                                            *
-C  1.  Call TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE, CSWITCH) for  *
-C    initialization.                                                   * 
+C  1.  Call TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE, CSWITCH) *
+C      for initialization.                                             * 
 C  2.  Currently there is no gap considered in the model               *
 C                                                                      *
 C  Notation                                                            *
@@ -5327,6 +5327,8 @@ C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
 C    QPPP (W/m^3)   D: Current power density                           *
+C    T_COOLANT      D: Coolant temperature of He or salt depending on  *
+C                      CSWITCH value
 C    T_HE (C)       D: Current Helium temperature (if CSWITCH = 1)     *
 C    T_SALT  (C)    D: Current salt temperature (if CSWITCH = 2 +)     *
 C    BURNUP (FIMA)  D: Current burnup of the pebble                    *
@@ -5472,9 +5474,10 @@ C***********************************************************************
 C
 C***********************************************************************
 C                                                                      *
-      SUBROUTINE TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE, CSWITCH)
+      SUBROUTINE TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE, 
+     &                                  CSWITCH)
 C
-	DOUBLE PRECISION QPPP, T_HE, BURNUP, T_PARTICLE
+	DOUBLE PRECISION QPPP, T_COOLANT, BURNUP, T_PARTICLE, T_HE
 C  Core parameters
 	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, A_CORE, V_CORE,
      &                 P_CORE, T_GASIN, T_GASOUT, MF_HE, PACKING,
@@ -5553,10 +5556,10 @@ C
 C  First time run: initialize arrays storing temperature profiles
       IF (QPPP .EQ. 0.0D0) THEN
 	  DO 3110 I = 0, 2
-	    T_PEBBLE(I) = T_HE
+	    T_PEBBLE(I) = T_COOLANT
 3110    CONTINUE
         DO 3120 I = 0, 5
-	    T_PARTICLE(I) = T_HE
+	    T_PARTICLE(I) = T_COOLANT
 3120    CONTINUE
         RETURN
 	END IF
@@ -5565,6 +5568,7 @@ C  Modeling begins here ...
 C
       IF (CSWITCH.EQ.1) THEN
 C  Thermal properties for coolant He (from A. F. Mills)
+      T_HE = T_COOLANT
       CP_HE = 5200.0D0                                                 ! J/kg.K
       CALL LOCATE_ARRAY(HE_THERMAL(:,0), 7, 1, T_HE, INDEX)
       IF (INDEX .EQ. 0) INDEX = INDEX + 1   !exceeds lowerbound; make adjustment.
@@ -5594,7 +5598,7 @@ C     &       /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
 C      MU_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,3)        ! kg/m.s
 C     &         +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,3))
 C     &        /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
-     END IF
+       END IF
 C  TRISO fuel geometries, including calculation of fuel swelling
       V_PARTICLE = 4.0D0*PIE*R5**3*1.0D-18/3.0D0
       V_FUEL = 4.0D0*PIE*R10**3/3.0D0
@@ -5715,12 +5719,26 @@ C   Average K of pebble fuel zone
       K_PFZ = ((V_FUEL*K_FUEL+V_BUFFER*K_BUFFER+V_IPYC*K_IPYC+
      &         V_SIC*K_SIC+V_OPYC*K_OPYC)*NPARTICLE+V_PFM*K_PFM)/V_PFZ
 C   Update pebble temperature profile
-      T_PEBBLE(0) = TPEBBLE(T_HE, H_HE, Q_PFZ, 0.0D0)
-      T_PEBBLE(1) = TPEBBLE(T_HE, H_HE, Q_PFZ, PFZRADIUS)
-      T_PEBBLE(2) = TPEBBLE(T_HE, H_HE, Q_PFZ, PEBRADIUS)
+      IF (CSWITCH.EQ.1) THEN
+         T_HE = T_COOLANT
+         T_PEBBLE(0) = TPEBBLE(T_HE, H_HE, Q_PFZ, 0.0D0)
+         T_PEBBLE(1) = TPEBBLE(T_HE, H_HE, Q_PFZ, PFZRADIUS)
+         T_PEBBLE(2) = TPEBBLE(T_HE, H_HE, Q_PFZ, PEBRADIUS)
+      ELSE
+         T_SALT = T_COOLANT
+         T_PEBBLE(0) = TPEBBLE(T_SALT, H_SALT, Q_PFZ, 0.0D0)
+         T_PEBBLE(1) = TPEBBLE(T_SALT, H_SALT, Q_PFZ, PFZRADIUS)
+         T_PEBBLE(2) = TPEBBLE(T_SALT, H_SALT, Q_PFZ, PEBRADIUS)
+      END IF   
 C  Calculate the temperature profile of a particle randomly chosen in the pebble
       R = R_IN_PEBBLE
+      IF (CSWITCH.EQ.1) THEN
+        T_HE = T_COOLANT
 	T_PS = TPEBBLE(T_HE, H_HE, Q_PFZ, R)
+      ELSE
+        T_SALT = T_COOLANT
+        T_PS = TPEBBLE(T_SALT, H_SALT, Q_PFZ, R)
+      END IF  
       Q_FUEL = Q_PFZ*V_PFZ/(NPARTICLE*V_FUEL)
       T_PARTICLE(0) = TPARTICLE(T_PS, Q_FUEL, 0.0D0)
 	T_PARTICLE(1) = TPARTICLE(T_PS, Q_FUEL, R1)
