@@ -50,7 +50,7 @@ C                                                                      *
 C  Changes:                                                            *
 C  1.  The model now includes fission product attack of the SiC        *	                                                    
 C  2.  The model now accounts for failure due to the amoeba effect     *
-C	         	                                                       *
+C		                                                       *
 C***********************************************************************
 C
 C  Description of main program variables
@@ -1042,6 +1042,11 @@ C
 	CALL RANDOM_NUMBER(RN)
 	Z = RN    !Initialize random number generator
 C
+C  Run TIMCOAT as Version 1 or as Version 2
+C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
+      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
+      READ(IKEY,*) VERSIONSWITCH
+C      
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
 C
@@ -1650,21 +1655,40 @@ C    Calculate temperature distribution in particles
 	      HCARD(TIMESTEP,14) = T_PARTICLE(5)
 		  CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
 	      HCARD(TIMESTEP,15) = PRESS
-C    Calculate the kernel migration distance	
+C	      
+C  Have switch to turn on or off v.2
+C  Calculate the kernel migration distance if v.2 is on				
+      IF (VERSIONSWITCH .EQ. 1)  THEN
+	   KMC = 0.0D0
+           DCORR = 0.0D0
+      ELSE
            IF (FUELTYPE .EQ. 'UO2') THEN
-               KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
-           ELSE
-	       KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
+	        KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
+                     ELSE
+	        KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
            END IF
-               AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
-	       TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
-               MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
-C    Account for FP corrosion of SiC
+      END IF
+           AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
+	   TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
+      IF (VERSIONSWITCH .EQ. 1) THEN
+           MD = 0.0D0
+      ELSE
+           MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
+      END IF
+C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
+      IF (VERSIONSWITCH .EQ. 1) THEN
+           DCORR = 0.0D0
+           R3=R3+DCORR
+           R2=R2+DCORR
+           WRITE(CORR,*) N, OPERTIME, R3
+      ELSE
             DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
      &              (T_PARTICLE(3)+273.15)))	       
 	      R3=R3+DCORR
 	      R2=R2+DCORR
 	      WRITE(CORR,*) N, OPERTIME, R3
+      END IF
+      
 C    Calculate unrestrained swelling rates in PyC
             CALL SWELLU(T_PARTICLE(3), FLUENCE/1.0D21, IPYCD, IPYCBAF0,
      &                  IPYCCRATE, SRDOT_IPYC, STDOT_IPYC)
@@ -2087,12 +2111,18 @@ C    Register end-of-life mean tangential stresses in layers
 C
 C    Evaluate fuel failure
 C    DPD is given by eqn 3.14 from Diecker 2005
-      IF(RUNIRR .EQ. 'FAILURE') THEN
-       DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &        (T_PARTICLE(3)+273.15)))        
-       CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+	 IF(RUNIRR .EQ. 'FAILURE') THEN
+             IF (VERSIONSWITCH .EQ. 1) THEN
+             DPD = 0.0D0
+             CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
-      END IF
+             ELSE		  
+	        DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+     &        (T_PARTICLE(3)+273.15)))        
+	     CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                     OPERTIME, DT, MD)
+             END IF
+	 END IF
 C
 C    Write to debug file of material strength data
 		  IF((.NOT.PARAMETRIC_STUDY).AND. DEBUG .AND. NOMINAL) THEN
@@ -2702,8 +2732,12 @@ C    Register end-of-life mean tangential stresses in layers
 C
 C    Evaluate fuel failure, do NOT do so if performing parametric study
 		  IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+		     IF (VERSIONSWITCH .EQ. 1) THEN
+		     DPD = 0.0D0
+		     ELSE
 	        DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
      &        (T_PARTICLE(3)+273.15)))  
+                     END IF
 			CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
 		  END IF
@@ -3160,8 +3194,12 @@ C    Register end-of-life tangential stresses in layers
 C
 C    Evaluate fuel failure, do NOT do so if performing parametric study
 		IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+		     IF (VERSIONSWITCH .EQ. 1) THEN
+		     DPD = 0.0D0
+		     ELSE
               DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
      &        (T_PARTICLE(3)+273.15)))     
+                     END IF
 			CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
 		END IF
@@ -6976,6 +7014,8 @@ C
 C      EXTERNAL RAN
 C  F is the Weibull cumulative distribution function  
         CALL RANDOM_NUMBER(RN)
+C This was originally here: F = RAND(0)
+C Change to:
         F = RN
 C
 C  The distributions 1 - F and F are equivalent
