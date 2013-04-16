@@ -596,7 +596,7 @@ C  1. Reactor specifications
      &                 PEBBLE_R, PEBBLE_Z, P_CHANNEL, P_BLOCK, P_PAR
 	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_GASIN,
      &                 T_GASOUT, MF_HE, MF_SALT, PACKING, T_SALTIN, 
-     &                   T_SALTOUT
+     &                   T_SALTOUT, T_COOLANT
 	DOUBLE PRECISION PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                 R_IN_PEBBLE
 C  2. Particle geometry
@@ -669,6 +669,7 @@ C  Other variables
 	INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
 	INTEGER   CSWITCH
 	INTEGER   IKISIC, CORR  
+C       INTEGER   VERSIONSWITCH
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
 	INTEGER   NCHANNEL, NAXIAL, NLAYER
 	INTEGER   ISEED
@@ -1058,8 +1059,9 @@ C
 C
 C  Run TIMCOAT as Version 1 or as Version 2
 C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
-      WRITE(ITERM,*) 'Turn on fission product attack of SiC and amoeba',
-     &                    ' effect? (no = 1, yes = 2)'
+C      WRITE(ITERM,*) 'Turn on fission product attack of SiC and amoeba',
+C     &                    ' effect? (no = 1, yes = 2)'
+      WRITE(ITERM,*) '1 or 2'
       READ(IKEY,*) VERSIONSWITCH
 C
 C  Select coolant type:  1 = Helium, 2 = Li2BeF4 (flibe)
