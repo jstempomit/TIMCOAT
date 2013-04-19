@@ -645,7 +645,7 @@ C  13. Fission Product Attack Variables
 C  14. Amoeba Effect Variables
       DOUBLE PRECISION MD, AVGT, TGRAD, KMC
 C  Other variables
-      DOUBLE PRECISION NA        !Avagadro Number
+      DOUBLE PRECISION NA        !Avogadro Number
       DOUBLE PRECISION TIME, TIME0, ELAPTIME
 	DOUBLE PRECISION TIMELIMIT, SIG_UPPER, SIG_LOWER
 	DOUBLE PRECISION PARASET(1:2, 1:4), SIGXIPYCX, SIGXIPYCM,
@@ -655,7 +655,7 @@ C  Other variables
      &		  PARFAIL0, IPYCFAIL0, SICFAIL0, OPYCFAIL0, FAILTYPE,
      &          NBURP, NCASES, NDUMPED, LENGTH_OF_FILE, I, J, K, N
 	INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
-	INTEGER   IKISIC, CORR  
+	INTEGER   IKISIC, CORR, MSWITCH  
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
 	INTEGER   NCHANNEL, NAXIAL, NLAYER
 	INTEGER   ISEED
@@ -931,7 +931,7 @@ C
      &				  PARFAIL
 C
 C  Version data
-      DATA VERSION /'v 1.0   '/     ! February 08, 2004
+      DATA VERSION /'v 2.0   '/     ! May 2005
       DATA STATUS  /'DEBUG'/
       DATA CTIME   /'        '/, CDATE/'        '/
 C  Numerical constants
@@ -1041,6 +1041,18 @@ C
 	CALL RANDOM_SEED (PUT = (/ISEED/))
 	CALL RANDOM_NUMBER(RN)
 	Z = RN    !Initialize random number generator
+C
+C  Run TIMCOAT as Version 1 or as Version 2
+C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
+C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo',
+C     &                    ' me no likey' 
+C      READ(IKEY,*) VERSIONSWITCH
+C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo'
+C      READ(IKEY,*) VERSIONSWITCH
+      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
+      READ(IKEY,*) MSWITCH
+C
+C     MSWITCH = 2
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
@@ -3516,39 +3528,45 @@ C  Write the debug file various info. after the calculation
 		WRITE(IDBG, *) 'End of debug file.'
 	END IF
 C
-      TIME = 0
-	MACHTIME = TIME
-	WRITE(ITERM,*)
-	IF (TIME .LT. 60.0) THEN
-	  WRITE(ITERM,*) 'Elapsed calculation time: ',TIME,' seconds'
-	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
-	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/60.0),
-     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
-	ELSE IF (TIME .GT. 3600.0) THEN
-	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/3600.0),
-     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
-     A                 'minutes and ',MOD(MOD(INT(TIME),3600),60),
-     A                 'seconds'
-	END IF
-	WRITE(ITERM,*)
+C  Comment out the original time statements because they do not work.
+C      TIME = 0
+C	MACHTIME = TIME
+C	WRITE(ITERM,*)
+C	IF (TIME .LT. 60.0) THEN
+C	  WRITE(ITERM,*) 'Elapsed calculation time: ',TIME,' seconds'
+C	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
+C	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/60.0),
+C     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
+C	ELSE IF (TIME .GT. 3600.0) THEN
+C	  WRITE(ITERM,*) 'Elapsed calculation time: ',INT(TIME/3600.0),
+C     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
+C     A                 'minutes and ',MOD(MOD(INT(TIME),3600),60),
+C     A                 'seconds'
+C	END IF
 C
-C
+C  Print the elapsed CPU time to the terminal
+      CPUTIME = MCLOCK()
+      WRITE(ITERM,*)
+      WRITE(ITERM,*)'Elapsed calculation time (sec):', CPUTIME/1000
+      WRITE(ITERM,*)
+C  Print the number of particles per second to the terminal
+	WRITE(ITERM,*)
 	WRITE(ITERM,*) 'Average number of particles per second = ',
-     A                FLOAT(NCASES)/MAX(TIME, 1.0 D0)
+     A                FLOAT(NCASES)/(CPUTIME/1000)
 	WRITE(ITERM,*)
-
-	WRITE(IOUT,*)
-	IF (TIME .LT. 60.0) THEN
-	  WRITE(IOUT,*) 'Elapsed calculation time: ',TIME,' seconds'
-	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
-	  WRITE(IOUT,*) 'Elapsed calculation time: ',INT(TIME/60.0),
-     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
-	ELSE IF (TIME .GT. 3600.0) THEN
-	  WRITE(IOUT,*) 'Elapsed calcuation time: ',INT(TIME/3600.0),
-     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
-     A                 'minutes and', MOD(MOD(INT(TIME),3600),60),
-     A                 'seconds'
-	END IF
+C
+C	WRITE(IOUT,*)
+C	IF (TIME .LT. 60.0) THEN
+C	  WRITE(IOUT,*) 'Elapsed calculation time: ',TIME,' seconds'
+C	ELSE IF ((TIME .GT. 60.0) .AND. (TIME .LT. 3600.0)) THEN
+C	  WRITE(IOUT,*) 'Elapsed calculation time: ',INT(TIME/60.0),
+C     A                 ' minutes and ',MOD(INT(TIME),60),' seconds'
+C	ELSE IF (TIME .GT. 3600.0) THEN
+C	  WRITE(IOUT,*) 'Elapsed calcuation time: ',INT(TIME/3600.0),
+C     A                 ' hours ',INT(MOD(INT(TIME),3600)/60.0),
+C     A                 'minutes and', MOD(MOD(INT(TIME),3600),60),
+C     A                 'seconds'
+C	END IF
 	WRITE(IOUT,*)
 	WRITE(IOUT,*) '======================= Statistical Report ',
      &              '======================='
