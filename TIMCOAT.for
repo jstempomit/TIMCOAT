@@ -1662,21 +1662,30 @@ C    Calculate temperature distribution in particles
 	      HCARD(TIMESTEP,14) = T_PARTICLE(5)
 		  CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
 	      HCARD(TIMESTEP,15) = PRESS
-C    Calculate the kernel migration distance	
+C	      
+C  Switch to run TIMCOAT as mode 1 or mode 2
+C  Calculate the kernel migration distance if mode 2 is ON (MSWITCH = 2):				
+      IF (MSWITCH .EQ. 2)  THEN
            IF (FUELTYPE .EQ. 'UO2') THEN
-               KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
+            KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
            ELSE
-	       KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
+	        KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
            END IF
-               AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
+           AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
 	       TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
-               MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
-C    Account for FP corrosion of SiC
-            DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
+           MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
+      ELSE
+      END IF
+C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
+      IF (MWSWITCH .EQ. 2)  THEN
+          DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
      &              (T_PARTICLE(3)+273.15)))	       
 	      R3=R3+DCORR
 	      R2=R2+DCORR
 	      WRITE(CORR,*) N, OPERTIME, R3
+      ELSE
+      END IF
+C
 C    Calculate unrestrained swelling rates in PyC
             CALL SWELLU(T_PARTICLE(3), FLUENCE/1.0D21, IPYCD, IPYCBAF0,
      &                  IPYCCRATE, SRDOT_IPYC, STDOT_IPYC)
