@@ -1488,7 +1488,7 @@ C    For constant power irradiation, namely, PSWITCH=3, IRRTIME is known beforeh
 	PRESS = 0.0D0
 	CALL RANDOM_NUMBER(RN)
        R_IN_PEBBLE = RN
-	CALL RANDOM_NUMBER(RN)
+C	CALL RANDOM_NUMBER(RN)  !WHY IS THIS HERE A SECOND TIME?????
 	R_IN_PEBBLE = R_IN_PEBBLE*PFZRADIUS
 C    Clear kernel migration distance
       MD = 0.0D0
@@ -3173,7 +3173,6 @@ C    Write to debug file of material strength data
      &			KI1, KI2
 		END IF
 C
-C  !yo yo yo still haven't found the problem 
 C    Create histograms here
           IF(HISTOGRAM) THEN
 C           Particle histogram
@@ -3339,7 +3338,7 @@ C  Gain statistical information on stresses
 	SIGLVARS = SIGLVARS + SIGLSIC**2
 	SIGLVARO = SIGLVARO + SIGLOPYC**2
 C
-1000  CONTINUE  ! End of Monte Carlo Loop: Go get another particle   !YO YO YO THE PROBLEM STARTS AFTER THE FIRST PARTICLE HAS BEEN RUN.
+1000  CONTINUE  ! End of Monte Carlo Loop: Go get another particle
 C  Release memory for data stored arrays
       IF(PSWITCH.EQ.1) THEN
         DEALLOCATE (POWDISTR)
