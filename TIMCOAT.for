@@ -655,7 +655,8 @@ C  Other variables
      &		  PARFAIL0, IPYCFAIL0, SICFAIL0, OPYCFAIL0, FAILTYPE,
      &          NBURP, NCASES, NDUMPED, LENGTH_OF_FILE, I, J, K, N
 	INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
-	INTEGER   IKISIC, CORR, MSWITCH  
+	INTEGER   IKISIC, CORR
+	INTEGER*4 MSWITCH
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
 	INTEGER   NCHANNEL, NAXIAL, NLAYER
 	INTEGER   ISEED
@@ -1049,10 +1050,10 @@ C     &                    ' me no likey'
 C      READ(IKEY,*) VERSIONSWITCH
 C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo'
 C      READ(IKEY,*) VERSIONSWITCH
-      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
-      READ(IKEY,*) MSWITCH
+C      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
+C      READ(IKEY,*) MSWITCH
 C
-C     MSWITCH = 2
+      MSWITCH = 2
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
@@ -1672,19 +1673,19 @@ C  Calculate the kernel migration distance if mode 2 is ON (MSWITCH = 2):
 	        KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
            END IF
            AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
-	       TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
+	   TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
            MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
       ELSE
       END IF
 C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
-      IF (MWSWITCH .EQ. 2)  THEN
+C      IF (MWSWITCH .EQ. 2)  THEN
           DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
      &              (T_PARTICLE(3)+273.15)))	       
 	      R3=R3+DCORR
 	      R2=R2+DCORR
 	      WRITE(CORR,*) N, OPERTIME, R3
-      ELSE
-      END IF
+C      ELSE
+C      END IF
 C
 C    Calculate unrestrained swelling rates in PyC
             CALL SWELLU(T_PARTICLE(3), FLUENCE/1.0D21, IPYCD, IPYCBAF0,
@@ -2108,6 +2109,8 @@ C    Register end-of-life mean tangential stresses in layers
 C
 C    Evaluate fuel failure
 C    DPD is given by eqn 3.14 from Diecker 2005
+C    DPD = distance of Pd penetration
+C      IF (MSWITCH.EQ.2) THEN
       IF(RUNIRR .EQ. 'FAILURE') THEN
        DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
      &        (T_PARTICLE(3)+273.15)))        
