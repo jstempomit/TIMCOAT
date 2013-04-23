@@ -1677,15 +1677,17 @@ C  Calculate the kernel migration distance if mode 2 is ON (MSWITCH = 2):
            MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
       ELSE
       END IF
+C
+C
 C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
-C      IF (MWSWITCH .EQ. 2)  THEN
+      IF (MSWITCH .EQ. 2)  THEN
           DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
      &              (T_PARTICLE(3)+273.15)))	       
 	      R3=R3+DCORR
 	      R2=R2+DCORR
 	      WRITE(CORR,*) N, OPERTIME, R3
-C      ELSE
-C      END IF
+      ELSE
+      END IF
 C
 C    Calculate unrestrained swelling rates in PyC
             CALL SWELLU(T_PARTICLE(3), FLUENCE/1.0D21, IPYCD, IPYCBAF0,
