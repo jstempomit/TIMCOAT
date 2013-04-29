@@ -50,7 +50,7 @@ C                                                                      *
 C  Changes:                                                            *
 C  1.  The model now includes fission product attack of the SiC        *	                                                    
 C  2.  The model now accounts for failure due to the amoeba effect     *
-C	         	                                                       *
+C                                                                      *
 C***********************************************************************
 C
 C  Description of main program variables
@@ -1043,17 +1043,11 @@ C
 	CALL RANDOM_NUMBER(RN)
 	Z = RN    !Initialize random number generator
 C
-C  Run TIMCOAT as Version 1 or as Version 2
-C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
-C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo',
-C     &                    ' me no likey' 
-C      READ(IKEY,*) VERSIONSWITCH
-C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo'
-C      READ(IKEY,*) VERSIONSWITCH
-C      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
-C      READ(IKEY,*) MSWITCH
-C
-      MSWITCH = 2
+C  Run TIMCOAT as mode 1 or as mode 2
+C  Mode 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
+      WRITE(ITERM,*) 'Run TIMCOAT with amoeba effect, Pd, and fission',
+                      ' product corrosion of SiC?  (no = 1, yes = 2)'
+      READ(IKEY,*) MSWITCH
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
@@ -1155,16 +1149,16 @@ C  If surface analysis is to be performed, set SURFACE_ANALYSIS to .TRUE., inste
 c	SURFACE_ANALYSIS = .TRUE.
 C
 C  Open output files
-	OPEN (FILE = TRIM(OSPEC)//'.out',STATUS = "REPLACE",UNIT = IOUT)	
+       OPEN (FILE = TRIM(OSPEC)//'.out',STATUS = "REPLACE",UNIT = IOUT)	
 C
 	IF(.NOT. PARAMETRIC_STUDY) THEN
 C  Open an output file for debugging imformation
 	  IF(DEBUG) THEN
-	    OPEN(FILE = TRIM(OSPEC)//'.dbg',STATUS="REPLACE",UNIT = IDBG)
+	  OPEN(FILE = TRIM(OSPEC)//'.dbg',STATUS="REPLACE",UNIT = IDBG)
 C  Open intermediate variable output files for chemistry model
-          OPEN (FILE ='KI_SIC'//'.out',STATUS ="REPLACE", UNIT = IKISIC)
+         OPEN (FILE ='KI_SIC'//'.out',STATUS ="REPLACE", UNIT = IKISIC)
 	      WRITE (IKISIC,*) 'N','OPERTIME','DT','KI1'
-	  OPEN (FILE = 'CORR'//'.out',STATUS = "REPLACE", UNIT = CORR)
+	 OPEN (FILE = 'CORR'//'.out',STATUS = "REPLACE", UNIT = CORR)
 	      WRITE (CORR,*) 'N','OPERTIME','R3'
 	  END IF         
 C  Open an output file for particle histogram
@@ -1319,7 +1313,7 @@ C  Open output files which will be appended after each cycle in the loop below
 	      OPEN(FILE='out_epit'//'.dat',STATUS="REPLACE",UNIT=IOUTET)
 	      OPEN(FILE='out_ur'//'.dat',STATUS="REPLACE",UNIT=IOUTUR)
 	    ELSE IF(PSWITCH.EQ.2) THEN
-	      OPEN(FILE='irr_histry'//'.out',STATUS="REPLACE",UNIT=ITEST)
+	     OPEN(FILE='irr_histry'//'.out',STATUS="REPLACE",UNIT=ITEST)
 	      OPEN(FILE='out_swel'//'.dat',STATUS="REPLACE",UNIT=IOUTSW)
 	      OPEN(FILE='out_sigr'//'.dat',STATUS="REPLACE",UNIT=IOUTSR)
 	      OPEN(FILE='out_sigt'//'.dat',STATUS="REPLACE",UNIT=IOUTST)
@@ -1559,7 +1553,7 @@ C  Write to debug file various info. at the initial state
 	  WRITE(IDBG, 635)
 	  WRITE(IDBG, *)
 	  WRITE(IDBG, 623) FLUENCE, IPYCF, SIGFIPYC, SICF, SIGFSIC,
-     &				   OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
+     &			   OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
      &				   KI1, KI2
 	END IF
 C
@@ -1577,7 +1571,7 @@ C  Clear history card of particles
 C  Inner loop -- shuffle the pebbles into the reactor core and generate the history card
         DO 500 I = 1, SHUFFLE
 C    Sample one channel into which the pebble goes and the path it flows
-          CALL FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE, WHICH_CHN,PATH)
+         CALL FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE, WHICH_CHN,PATH)
 	    NBLOCK = BLOCKMAP(1,WHICH_CHN) !Number of blocks in the selected channel
 	    IF ((.NOT.PARAMETRIC_STUDY) .AND. NOMINAL) THEN
  	      WRITE(ITEST, *) OPERTIME, WHICH_CHN, NBLOCK
@@ -1596,8 +1590,8 @@ C    Calculate the total power of this channel for the purpose of scaling He tem
 	      P_BLOCK = 0.0D0
             DO 235 K = 1, SHUFFLE
 	        P_BLOCK = P_BLOCK + QPPP_AVG*POWDISTR((WHICH_BLK-1)*
-     &				 (SHUFFLE+1)+K, 4)*POWDISTR((WHICH_BLK-1)*
-     &				 (SHUFFLE+1)+K, 2)*1.0D-6
+     &			(SHUFFLE+1)+K, 4)*POWDISTR((WHICH_BLK-1)*
+     &			(SHUFFLE+1)+K, 2)*1.0D-6
 235         CONTINUE
             HCARD(J,8) = P_BLOCK
 	      P_CHANNEL = P_CHANNEL + P_BLOCK
@@ -1636,14 +1630,14 @@ C    Determine current burnup
      &					WHICH_BTH,5)/BU_CONV
 	        ELSE
 	          TEMPERORY = (POWDISTR((WHICH_BLK-1)*(SHUFFLE+1)
-     &					   +WHICH_BTH,5)-POWDISTR((WHICH_BLK-1
-     &					   +NBLOCK-1)*(SHUFFLE+1)+WHICH_BTH-1,5))
+     &				+WHICH_BTH,5)-POWDISTR((WHICH_BLK-1
+     &				+NBLOCK-1)*(SHUFFLE+1)+WHICH_BTH-1,5))
      &					   /BU_CONV
 	          IF(TEMPERORY.GT.0.0D0) BURNUP = BURNUP + TEMPERORY
 	        END IF
 	      ELSE
               BURNUP = BURNUP+(POWDISTR((WHICH_BLK-1)*(SHUFFLE+1)+
-     &				 WHICH_BTH,5)-POWDISTR((WHICH_BLK-1-1)*(SHUFFLE+1)
+     &		     WHICH_BTH,5)-POWDISTR((WHICH_BLK-1-1)*(SHUFFLE+1)
      &				 +WHICH_BTH,5))/BU_CONV
 	      END IF
             QPPP = QPPP_AVG*POWDISTR((WHICH_BLK-1)*(SHUFFLE+1)+
@@ -1654,14 +1648,14 @@ C    Determine current burnup
      &                          (T_GASOUT-T_GASIN)/P_CHANNEL
 	      T_HE = HCARD(TIMESTEP,8)
 C    Calculate temperature distribution in particles
-            CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)  !calculate T distribution
+           CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)  !calculate T distribution
 	      HCARD(TIMESTEP,9)  = T_PARTICLE(0)
 	      HCARD(TIMESTEP,10)  = T_PARTICLE(1)
 	      HCARD(TIMESTEP,11) = T_PARTICLE(2)
 	      HCARD(TIMESTEP,12) = T_PARTICLE(3)
 	      HCARD(TIMESTEP,13) = T_PARTICLE(4)
 	      HCARD(TIMESTEP,14) = T_PARTICLE(5)
-		  CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
+	   CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
 	      HCARD(TIMESTEP,15) = PRESS
 C	      
 C  Switch to run TIMCOAT as mode 1 or mode 2
@@ -1832,7 +1826,7 @@ C
             IPYCE = E_PYC(IPYCD,IPYCBAF0,IPYCLC,HCARD(J,4),HCARD(J,12))
             OPYCE = E_PYC(OPYCD,OPYCBAF0,OPYCLC,HCARD(J,4),HCARD(J,13))
 C
-	      CALL SSICREEP_PYC(HCARD(J,4),IPYCD,HCARD(J,12),E_IPYCREEP,
+	    CALL SSICREEP_PYC(HCARD(J,4),IPYCD,HCARD(J,12),E_IPYCREEP,
      &						IPYCREEP,IPYCCNU)
             CALL SSICREEP_PYC(HCARD(J,4),OPYCD,HCARD(J,13),E_OPYCREEP,
      &						OPYCREEP,OPYCCNU)
@@ -1853,8 +1847,8 @@ C    Restore residual stresses, strains, and displacement from last cycle
 			UR(K)   = UR0(K)
 251         CONTINUE
 C    Do mechanical analyses
-	      CALL M_ANALYSIS(MCODE, HCARD(J,15), PAMB, HCARD(J,5), SIGR,
-     &					  SIGT, EPIR, EPIT, UR)
+	CALL M_ANALYSIS(MCODE, HCARD(J,15), PAMB, HCARD(J,5), SIGR,
+     &			SIGT, EPIR, EPIT, UR)
 		  HSIGR(J,:) = SIGR
 		  HSIGT(J,:) = SIGT
 C    Accumulate apparent creep strains
@@ -1879,7 +1873,7 @@ C    Calculate irradiated BAF, apparent creep strains and restrained swelling ra
 		  IPYCBAFI = BAFI_PYC(IPYCBAF0, HCARD(J, 4))
 		  OPYCBAFI = BAFI_PYC(OPYCBAF0, HCARD(J, 4))
 C
-		  CALL SSICREEP_PYC(HCARD(J,4),IPYCD,HCARD(J,12),E_IPYCREEP,
+	    CALL SSICREEP_PYC(HCARD(J,4),IPYCD,HCARD(J,12),E_IPYCREEP,
      &						IPYCREEP,IPYCCNU)
             CALL SSICREEP_PYC(HCARD(J,4),OPYCD,HCARD(J,13),E_OPYCREEP,
      &						OPYCREEP,OPYCCNU)
@@ -1995,10 +1989,10 @@ C
             CALL DRCURV(TIMESTEP,HCARD(1:TIMESTEP,5),
      &                  HCARD(1:TIMESTEP,19),NDEG,OSWT,SSPOLY,STAT)
 C	      IF (STAT(5).LE.80.0D0) THEN  !R-squared less than 80%
-C	        CALL ERR_HANDLER('Main: Curve fitting for OSWT not good enough',
+C	      CALL ERR_HANDLER('Main: Curve fitting for OSWT not good enough',
 C     &                    44,0,0,IERR)
 C	      ELSE IF(STAT(10).NE.0) THEN  !Data contain NaN
-C	        CALL ERR_HANDLER('Main: Fitting data for OSWT contain NaN',
+C	      CALL ERR_HANDLER('Main: Fitting data for OSWT contain NaN',
 C     &                    39,1,1,IERR)
 C	      END IF
 C    End of polynomial fitting
@@ -2028,7 +2022,7 @@ C
             OPYCE = E_PYC(OPYCD,OPYCBAF0,OPYCLC,HCARD(J,4),HCARD(J,13))
             SICE = E_SIC(HCARD(J,13))
 C
-	      CALL SSICREEP_PYC(HCARD(J,4),IPYCD,HCARD(J,12),E_IPYCREEP,
+	    CALL SSICREEP_PYC(HCARD(J,4),IPYCD,HCARD(J,12),E_IPYCREEP,
      &						IPYCREEP,IPYCCNU)
             CALL SSICREEP_PYC(HCARD(J,4),OPYCD,HCARD(J,13),E_OPYCREEP,
      &						OPYCREEP,OPYCCNU)
@@ -2047,8 +2041,8 @@ C    Restore residual stresses, strains, and displacement from last cycle
 			UR(K)   = UR0(K)
 260         CONTINUE
 C    Do mechanical analyses
-	      CALL M_ANALYSIS(MCODE, HCARD(J,15), PAMB, HCARD(J,5), SIGR,
-     &					  SIGT, EPIR, EPIT, UR)
+      CALL M_ANALYSIS(MCODE, HCARD(J,15), PAMB, HCARD(J,5), SIGR,
+     &					 SIGT, EPIR, EPIT, UR)
 C
 C    Accumulate apparent creep strains
 		  D_FLUENCE = DF
@@ -2058,10 +2052,10 @@ C    Accumulate apparent creep strains
      &                 OPYCCNU,D_FLUENCE,E_OPYCREEP)
 C
 C    Update the mean fracture strength of PyC layers due to temp. variation and irradiation
-		  CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARD(J,4),
-     &				HCARD(J,12),SIGT,IPYCF,SIGFIPYC,IPYCM)
-		  CALL STRENGTH_PYC('OPYC','IRR',OPYCD,OPYCBAF0,HCARD(J,4),
-     &				HCARD(J,13),SIGT,OPYCF,SIGFOPYC,OPYCM)
+	CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARD(J,4),
+     &			  HCARD(J,12),SIGT,IPYCF,SIGFIPYC,IPYCM)
+	CALL STRENGTH_PYC('OPYC','IRR',OPYCD,OPYCBAF0,HCARD(J,4),
+     &			   HCARD(J,13),SIGT,OPYCF,SIGFOPYC,OPYCM)
 C    Calculate the mean fracture strength of SiC layer
 		  CALL STRENGTH_SIC('IRR',HCARD(J,4),HCARD(J,12),SIGT,
      &						SICF,SIGFSIC,SICM)
@@ -2078,7 +2072,7 @@ C    Register maximum and minimum tangential stresses in layers
 			  SIGXSIC = SIGT(NDIVI+2+K)
 			  SIGFCSIC = SIGFSIC
 			END IF
-	        IF (SIGT(NDIVI+2+K).LT.SIGMSIC)  SIGMSIC = SIGT(NDIVI+2+K)
+	    IF (SIGT(NDIVI+2+K).LT.SIGMSIC)  SIGMSIC = SIGT(NDIVI+2+K)
 262         CONTINUE
             DO 263 K = 1, NDIVO+2
 	        IF (SIGT(NDIVI+NDIVS+4+K).GT.SIGXOPYC) THEN
@@ -2121,11 +2115,11 @@ C      IF (MSWITCH.EQ.2) THEN
       END IF
 C
 C    Write to debug file of material strength data
-		  IF((.NOT.PARAMETRIC_STUDY).AND. DEBUG .AND. NOMINAL) THEN
-			WRITE(IDBG, 623) HCARD(J,4), IPYCF, SIGFIPYC, SICF, 
-     &			SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
-     &			KI1, KI2
-		  END IF
+      IF((.NOT.PARAMETRIC_STUDY).AND. DEBUG .AND. NOMINAL) THEN
+	WRITE(IDBG, 623) HCARD(J,4), IPYCF, SIGFIPYC, SICF, 
+     &		SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
+     &		KI1, KI2
+      END IF
 C
 C    Create histograms here
             IF(HISTOGRAM) THEN
@@ -2238,14 +2232,14 @@ C    Output a bunch of results to various output files
 C
             IF(FAIL) THEN
 C             write information about the failed particle
-			IF(.NOT.NOMINAL) THEN
-			  WRITE(IOUTFL, 645) PARFAIL, FMODE, R1, R2, R3, R4, R5,
-     &						   BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
-     &						   SIGFIPYC, SIGFOPYC, SIGFSIC, KICSIC,
-     &						   SIGLIPYC, SIGLOPYC, SIGLSIC,
-     &						   HCARD(J,1)/86400.0D0, HCARD(J,4),
-     &						   HCARD(J,7), HCARD(J,11), HCARD(J,15), 
-     &						   WHICH_CHN, J, WHICH_BTH, FAILUREPATH
+		IF(.NOT.NOMINAL) THEN
+		  WRITE(IOUTFL, 645) PARFAIL, FMODE, R1, R2, R3, R4, R5,
+     &				BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
+     &				SIGFIPYC, SIGFOPYC, SIGFSIC, KICSIC,
+     &				SIGLIPYC, SIGLOPYC, SIGLSIC,
+     &				HCARD(J,1)/86400.0D0, HCARD(J,4),
+     &				HCARD(J,7), HCARD(J,11), HCARD(J,15), 
+     &				WHICH_CHN, J, WHICH_BTH, FAILUREPATH
 			END IF
 		    GO TO 990       
 	      END IF
@@ -2319,7 +2313,7 @@ C
 		HCARDB(TIMESTEP,12) = T_PARTICLE(3)
 		HCARDB(TIMESTEP,13) = T_PARTICLE(4)
 		HCARDB(TIMESTEP,14) = T_PARTICLE(5)
-		CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)
+            CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)
 		CALL SWELLU(T_PARTICLE(3), 0.0D0, IPYCD, IPYCBAF0,
      &                IPYCCRATE, SRDOT_IPYC, STDOT_IPYC)
 		CALL SWELLU(T_PARTICLE(5), 0.0D0, OPYCD, OPYCBAF0,
@@ -2331,16 +2325,16 @@ C
 		HCARDB(TIMESTEP,19) = STDOT_OPYC
 C
 C		Register quantities in this irradiation cycle
-		DO WHILE (TIMESTEP .LT. NSTEPINCYCLE)
-		  TIMESTEP = TIMESTEP + 1
-		  TIMESTEP_A = TIMESTEP_A + 1
-		  OPERTIME = IRRHISTRY(TIMESTEP_A,1)*86400.0D0  !seconds
-		  IRRTIME = IRRHISTRY(TIMESTEP_A,2)		!days
-		  FLUENCE = IRRHISTRY(TIMESTEP_A,4)*1.0D21
-		  FLUENCE_R = (IRRHISTRY(TIMESTEP_A,4)-HCARDB(0,4))*1.0D21
-		  BURNUP = IRRHISTRY(TIMESTEP_A,5)/100.0D0  !convert from percent to absolute value
-		  DO 740 I = 0, 5
-			T_PARTICLE(I) = IRRHISTRY(TIMESTEP_A,3)
+	DO WHILE (TIMESTEP .LT. NSTEPINCYCLE)
+	TIMESTEP = TIMESTEP + 1
+	TIMESTEP_A = TIMESTEP_A + 1
+	OPERTIME = IRRHISTRY(TIMESTEP_A,1)*86400.0D0  !seconds
+	IRRTIME = IRRHISTRY(TIMESTEP_A,2)		!days
+	FLUENCE = IRRHISTRY(TIMESTEP_A,4)*1.0D21
+	FLUENCE_R = (IRRHISTRY(TIMESTEP_A,4)-HCARDB(0,4))*1.0D21
+        BURNUP = IRRHISTRY(TIMESTEP_A,5)/100.0D0  !convert from percent to absolute value
+                  DO 740 I = 0, 5
+	          T_PARTICLE(I) = IRRHISTRY(TIMESTEP_A,3)
 740		  CONTINUE
 C
 		  HCARDB(TIMESTEP,1) = OPERTIME
@@ -2353,9 +2347,9 @@ C
 	      HCARDB(TIMESTEP,12) = T_PARTICLE(3)
 	      HCARDB(TIMESTEP,13) = T_PARTICLE(4)
 	      HCARDB(TIMESTEP,14) = T_PARTICLE(5)
-		  CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)
+            CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)
 	      HCARDB(TIMESTEP,15) = PRESS
-		  CALL SWELLU(T_PARTICLE(3), FLUENCE/1.0D21, IPYCD, IPYCBAF0,
+	    CALL SWELLU(T_PARTICLE(3), FLUENCE/1.0D21, IPYCD, IPYCBAF0,
      &                  IPYCCRATE, SRDOT_IPYC, STDOT_IPYC)
             CALL SWELLU(T_PARTICLE(5), FLUENCE/1.0D21, OPYCD, OPYCBAF0,
      &                  OPYCCRATE, SRDOT_OPYC, STDOT_OPYC)
@@ -2459,9 +2453,9 @@ C    Begin first time stress analysis with unrestrained condition
      &					HCARDB(J,13))
 		  SICE = E_SIC(HCARDB(J,13))
 C
-	      CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
+	  CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
      &						IPYCREEP,IPYCCNU)
-            CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
+          CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
      &						OPYCREEP,OPYCCNU)
 C
 		  IF(J.GE.1) THEN
@@ -2478,8 +2472,8 @@ C		  Restore residual stresses, strains, and displacement if any
 			UR(K)   = UR0(K)
 751		  CONTINUE
 C		  Do mechanical analysis
-		  CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5),SIGR,
-     &					  SIGT, EPIR, EPIT, UR)
+	CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5),SIGR,
+     &				SIGT, EPIR, EPIT, UR)
 		  HSIGRB(J,:) = SIGR
 		  HSIGTB(J,:) = SIGT
 C
@@ -2510,8 +2504,8 @@ C			WRITE(IOUTER,*)
 C			WRITE(IOUTET,*)
 C			WRITE(IOUTUR,*)
 C			Output swelling rate of IPyC for inspection
-C			WRITE(IOUTSW,628) HCARDB(J,4), HCARDB(J,16), HCARDB(J,17)
-C		  END IF
+C             WRITE(IOUTSW,628) HCARDB(J,4), HCARDB(J,16), HCARDB(J,17)
+C	          END IF
 C
 750		CONTINUE
 C    End of first time stress analysis
@@ -2526,9 +2520,9 @@ C		Calculate irradiated BAF, apparent creep strains and restrained swelling rate
 		  IPYCBAFI = BAFI_PYC(IPYCBAF0, HCARDB(J, 4))
 		  OPYCBAFI = BAFI_PYC(OPYCBAF0, HCARDB(J, 4))
 C
-		  CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
-     &						IPYCREEP,IPYCCNU)
-            CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
+	CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
+     &					IPYCREEP,IPYCCNU)
+        CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
      &						OPYCREEP,OPYCCNU)
 C
 		  IF(J.GT.1) THEN
@@ -2621,13 +2615,13 @@ C		Fit polynomials for swelling rate to be used in stress analysis
      &                HCARDB(1:TIMESTEP,19),NDEG,OSWT,SSPOLY,STAT)
 		END IF
 C
-		IF((.NOT.PARAMETRIC_STUDY) .AND. NOMINAL) THEN
-		  WRITE(IOUTSW, *)
-		  WRITE(IOUTSW, *) 'Radial and Tang. Swelling Coeffs for IPyC'
-		  WRITE(IOUTSW,628) ISWR(0), ISWR(1), ISWR(2), ISWR(3)
-	      WRITE(IOUTSW,628) ISWT(0), ISWT(1), ISWT(2), ISWT(3)
-	      WRITE(IOUTSW, *)
-		END IF
+	IF((.NOT.PARAMETRIC_STUDY) .AND. NOMINAL) THEN
+	  WRITE(IOUTSW, *)
+	  WRITE(IOUTSW, *) 'Radial and Tang. Swelling Coeffs for IPyC'
+	  WRITE(IOUTSW,628) ISWR(0), ISWR(1), ISWR(2), ISWR(3)
+	  WRITE(IOUTSW,628) ISWT(0), ISWT(1), ISWT(2), ISWT(3)
+	  WRITE(IOUTSW, *)
+        END IF
 C
 C    Begin second time stress analysis with restrained condition
 C		Restore apparent creep strains from last cycle
@@ -2643,10 +2637,10 @@ C
      &					HCARDB(J,13))
             SICE = E_SIC(HCARDB(J,13))
 C
-	      CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
-     &						IPYCREEP,IPYCCNU)
-            CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
-     &					    OPYCREEP,OPYCCNU)
+	   CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
+     &					IPYCREEP,IPYCCNU)
+           CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
+     &                                  OPYCREEP,OPYCCNU)
 C
 		  IF(J.GE.1) THEN
 		    DF = HCARDB(J,5) - HCARDB(J-1,5)
@@ -2661,9 +2655,9 @@ C		  Restore residual stresses, strains, and displacement if any
 			EPIT(K) = EPIT0(K)
 			UR(K)   = UR0(K)
 771		  CONTINUE
-C		  Do mechanical analysis
-		  CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5),SIGR,
-     &					  SIGT, EPIR, EPIT, UR)
+C       Do mechanical analysis
+	CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5),SIGR,
+     &                  SIGT, EPIR, EPIT, UR)
 C
 C		  Accumulate apparent creep strains
 		  D_FLUENCE = DF
@@ -2674,12 +2668,12 @@ C		  Accumulate apparent creep strains
 C
 C           Update the fracture strength of PyC layers due to 
 C           temp. variation and irradiation
-		  CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARDB(J,4),
+	CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARDB(J,4),
      &				HCARDB(J,12),SIGT,IPYCF,SIGFIPYC,IPYCM)
-		  CALL STRENGTH_PYC('OPYC','IRR',OPYCD,OPYCBAF0,HCARDB(J,4),
+        CALL STRENGTH_PYC('OPYC','IRR',OPYCD,OPYCBAF0,HCARDB(J,4),
      &				HCARDB(J,13),SIGT,OPYCF,SIGFOPYC,OPYCM)
 C           Calculate the mean fracture strength of SiC layer
-		  CALL STRENGTH_SIC('IRR',HCARDB(J,4),HCARDB(J,12),SIGT,
+		CALL STRENGTH_SIC('IRR',HCARDB(J,4),HCARDB(J,12),SIGT,
      &				SICF,SIGFSIC,SICM)
 C           Register maximum and minimum tangential stresses in layers
 		  DO 772 K = 1, NDIVI+2
@@ -2694,7 +2688,7 @@ C           Register maximum and minimum tangential stresses in layers
 			  SIGXSIC = SIGT(NDIVI+2+K)
 			  SIGFCSIC = SIGFSIC
 			END IF
-	        IF (SIGT(NDIVI+2+K).LT.SIGMSIC)  SIGMSIC = SIGT(NDIVI+2+K)
+	    IF (SIGT(NDIVI+2+K).LT.SIGMSIC)  SIGMSIC = SIGT(NDIVI+2+K)
 773		  CONTINUE
             DO 774 K = 1, NDIVO+2
 	        IF (SIGT(NDIVI+NDIVS+4+K).GT.SIGXOPYC) THEN
@@ -2727,19 +2721,19 @@ C    Register end-of-life mean tangential stresses in layers
 		  SIGLSIC  = SIGTSIC
 C
 C    Evaluate fuel failure, do NOT do so if performing parametric study
-		  IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
-	        DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &        (T_PARTICLE(3)+273.15)))  
-			CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+      IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+	  DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+     &          (T_PARTICLE(3)+273.15)))  
+          CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
-		  END IF
+      END IF
 C
 C    Write to debug file of material strength data
-		  IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
-		    WRITE(IDBG, 623) HCARDB(J,4), IPYCF, SIGFIPYC, SICF, 
-     &			SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
-     &			KI1, KI2
-		  END IF
+      IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
+          WRITE(IDBG, 623) HCARDB(J,4), IPYCF, SIGFIPYC, SICF, 
+     &		SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
+     &		KI1, KI2
+      END IF
 C
 C    Create histograms here
             IF(HISTOGRAM) THEN
@@ -2843,19 +2837,19 @@ C             Send stresses, strains, and displacement to output files
               WRITE(IOUTET,*)
               WRITE(IOUTUR,*)
 C             Output swelling rate of IPyC for inspection
-	        WRITE(IOUTSW,628) HCARDB(J,4), HCARDB(J,16), HCARDB(J,17)
+	      WRITE(IOUTSW,628) HCARDB(J,4), HCARDB(J,16), HCARDB(J,17)
 	      END IF
 C
 		  IF(FAIL) THEN
 C             write information about the failed particle
-			IF(.NOT.NOMINAL) THEN
-			  WRITE(IOUTFL, 646) PARFAIL, FMODE, R1, R2, R3, R4, R5,
-     &						   BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
-     &						   SIGFIPYC, SIGFOPYC, SIGFSIC, KICSIC,
-     &						   SIGLIPYC, SIGLOPYC, SIGLSIC,
-     &						   HCARDB(J,1)/86400.0D0, HCARDB(J,4),
-     &						   HCARDB(J,7),HCARDB(J,11),HCARDB(J,15),
-     &						   FAILUREPATH
+          IF(.NOT.NOMINAL) THEN
+             WRITE(IOUTFL, 646) PARFAIL, FMODE, R1, R2, R3, R4, R5,
+     &			   BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
+     &			   SIGFIPYC, SIGFOPYC, SIGFSIC, KICSIC,
+     &			   SIGLIPYC, SIGLOPYC, SIGLSIC,
+     &			   HCARDB(J,1)/86400.0D0, HCARDB(J,4),
+     &			   HCARDB(J,7),HCARDB(J,11),HCARDB(J,15),
+     &			   FAILUREPATH
 			END IF
 C			Release the allocated arrays
 			DEALLOCATE (HCARDB)
@@ -2979,7 +2973,7 @@ C    Begin first time stress analysis with unrestrained condition
           OPYCE = E_PYC(OPYCD,OPYCBAF0,OPYCLC,HCARDB(J,4),HCARDB(J,13))
           SICE = E_SIC(HCARDB(J,13))
 C
-	    CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
+	  CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
      &					  IPYCREEP,IPYCCNU)
           CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
      &					  OPYCREEP,OPYCCNU)
@@ -2998,7 +2992,7 @@ C    Restore residual stresses, strains, and displacement if any
 		  UR(K)   = UR0(K)
 1141      CONTINUE
 C    Do mechanical analyses
-	    CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5), SIGR,
+      CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5), SIGR,
      &					SIGT, EPIR, EPIT, UR)
 		HSIGRB(J,:) = SIGR
 		HSIGTB(J,:) = SIGT
@@ -3047,9 +3041,9 @@ C    Calculate irradiated BAF, apparent creep strains and restrained swelling ra
 		IPYCBAFI = BAFI_PYC(IPYCBAF0, HCARDB(J, 4))
 		OPYCBAFI = BAFI_PYC(OPYCBAF0, HCARDB(J, 4))
 C
-	    CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
+      CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
      &					  IPYCREEP,IPYCCNU)
-          CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
+      CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
      &					  OPYCREEP,OPYCCNU)
 C
 		IF(J.GT.1) THEN
@@ -3101,9 +3095,9 @@ C
           OPYCE = E_PYC(OPYCD,OPYCBAF0,OPYCLC,HCARDB(J,4),HCARDB(J,13))
           SICE = E_SIC(HCARDB(J,13))
 C
-	    CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
+      CALL SSICREEP_PYC(HCARDB(J,4),IPYCD,HCARDB(J,12),E_IPYCREEP,
      &					  IPYCREEP,IPYCCNU)
-          CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
+      CALL SSICREEP_PYC(HCARDB(J,4),OPYCD,HCARDB(J,13),E_OPYCREEP,
      &					  OPYCREEP,OPYCCNU)
 C
 		IF(J.GE.1) THEN
@@ -3120,8 +3114,8 @@ C    Restore residual stresses, strains, and displacement if any
 		  UR(K)   = UR0(K)
 1150      CONTINUE
 C    Do mechanical analyses
-	    CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5), SIGR,
-     &					SIGT, EPIR, EPIT, UR)
+      CALL M_ANALYSIS(MCODE, HCARDB(J,15), PAMB, HCARDB(J,5), SIGR,
+     &                SIGT, EPIR, EPIT, UR)
 C
 C    Accumulate apparent creep strains
 		D_FLUENCE = DF
@@ -3131,13 +3125,13 @@ C    Accumulate apparent creep strains
      &               OPYCCNU,D_FLUENCE,E_OPYCREEP)
 C
 C    Update the fracture strength of PyC layers due to temp. variation and irradiation
-		CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARDB(J,4),
-     &				HCARDB(J,12),SIGT,IPYCF,SIGFIPYC,IPYCM)
-		CALL STRENGTH_PYC('OPYC','IRR',OPYCD,OPYCBAF0,HCARDB(J,4),
-     &				HCARDB(J,13),SIGT,OPYCF,SIGFOPYC,OPYCM)
+      CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARDB(J,4),
+     &                  HCARDB(J,12),SIGT,IPYCF,SIGFIPYC,IPYCM)
+      CALL STRENGTH_PYC('OPYC','IRR',OPYCD,OPYCBAF0,HCARDB(J,4),
+     &                   HCARDB(J,13),SIGT,OPYCF,SIGFOPYC,OPYCM)
 C    Calculate the mean fracture strength of SiC layer
-		CALL STRENGTH_SIC('IRR',HCARDB(J,4),HCARDB(J,12),SIGT,
-     &					  SICF,SIGFSIC,SICM)
+      CALL STRENGTH_SIC('IRR',HCARDB(J,4),HCARDB(J,12),SIGT,
+     &                   SICF,SIGFSIC,SICM)
 C
 C    Register maximum tangential stresses in layers
           DO 1160 K = 1, NDIVI+2
@@ -3185,19 +3179,19 @@ C    Register end-of-life tangential stresses in layers
 		SIGLSIC  = SIGTSIC
 C
 C    Evaluate fuel failure, do NOT do so if performing parametric study
-		IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
-              DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &        (T_PARTICLE(3)+273.15)))     
-			CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
-     &                     OPERTIME, DT, MD)
-		END IF
+      IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+      DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+     &      (T_PARTICLE(3)+273.15)))     
+      CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &             OPERTIME, DT, MD)
+      END IF
 C
 C    Write to debug file of material strength data
-		IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
-		  WRITE(IDBG, 623) HCARDB(J,4), IPYCF, SIGFIPYC, SICF, 
-     &			SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
-     &			KI1, KI2
-		END IF
+      IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
+         WRITE(IDBG, 623) HCARDB(J,4), IPYCF, SIGFIPYC, SICF, 
+     &           SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
+     &           KI1, KI2
+      END IF
 C
 C    Create histograms here
           IF(HISTOGRAM) THEN
@@ -3304,19 +3298,19 @@ C    Output swelling rate of IPyC for inspection
 	      WRITE(IOUTSW,628) HCARDB(J,4), HCARDB(J,16), HCARDB(J,17)
 	    END IF
 C
-          IF(FAIL) THEN
+      IF(FAIL) THEN
 C         write information about the failed particle
-		  IF(.NOT.NOMINAL) THEN
-			WRITE(IOUTFL, 646) PARFAIL, FMODE, R1, R2, R3, R4, R5,
-     &						 BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
-     &						 SIGFIPYC, SIGFOPYC, SIGFSIC, KICSIC,
-     &						 SIGLIPYC, SIGLOPYC, SIGLSIC,
-     &						 HCARDB(J,1)/86400.0D0, HCARDB(J,4),
-     &						 HCARDB(J,7),HCARDB(J,11),HCARDB(J,15),
-     &						 FAILUREPATH
-		  END IF
+      IF(.NOT.NOMINAL) THEN
+        WRITE(IOUTFL, 646) PARFAIL, FMODE, R1, R2, R3, R4, R5,
+     &                     BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
+     &                     SIGFIPYC, SIGFOPYC, SIGFSIC, KICSIC,
+     &                     SIGLIPYC, SIGLOPYC, SIGLSIC,
+     &                     HCARDB(J,1)/86400.0D0, HCARDB(J,4),
+     &                     HCARDB(J,7),HCARDB(J,11),HCARDB(J,15),
+     &                     FAILUREPATH
+      END IF
 		  GO TO 990       
-	    END IF
+      END IF
 C
 1140    CONTINUE
 C                                                                      *
@@ -3445,8 +3439,8 @@ C  End of the parametric study loop
 	IF(PERTURBATION_ANALYSIS) THEN
 	  WRITE(IPRMI, 636) SIGXIPYC, SIGXSIC, SIGXOPYC, 
      &                    SIGMIPYC, SIGMSIC, SIGMOPYC,
-     &					SIGLIPYC, SIGLSIC, SIGLOPYC,
-     &					SIGFCIPYC,SIGFCSIC,SIGFCOPYC
+     &                    SIGLIPYC, SIGLSIC, SIGLOPYC,
+     &                    SIGFCIPYC,SIGFCSIC,SIGFCOPYC
 	ELSE IF(SURFACE_ANALYSIS) THEN
 	  WRITE(IPRMI, 629) SIGXIPYC
 	  WRITE(IPRMS, 629) SIGMSIC
@@ -3814,7 +3808,7 @@ C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
 C    COREMODEL      I: indicates whether new or old core model is      *
-C					 employed. (currently 1 for new and 2 for old)   *
+C                      employed. (currently 1 for new and 2 for old)   *
 C    CHANNELS(NAXIAL,-1:NCHANNEL) --                                   *
 C                   D: defines boundary lines of every channel         *
 C                      format: (z-position,r-position)                 *
@@ -3925,7 +3919,7 @@ C  Read in data
  2220   CONTINUE
         CLOSE (UNIT = IDAT, STATUS = 'KEEP')
 	ELSE
-	  CALL ERR_HANDLER(TRIM('COREMODEL not specified when calling CORE'),
+	 CALL ERR_HANDLER(TRIM('COREMODEL not specified when calling CORE'),
      &			  45,2,2,IERR)
 	END IF
 	RETURN
@@ -4171,10 +4165,10 @@ C                      0:  fracture induced by IPyC cracking           *
 C                      1:  overpressure rupture                        *
 C                      2:  amoeba effect                               *
 C    MCODE          C: Indicates the type of analysis to perform       *
-C					 'ISO3': full three-layer analysis               *
-C					 'IS2' : IPyC/SiC two-layer analysis             *
-C					 'SO2' : SiC/OPyC two-layer analysis             *
-C					 'S1'  : SiC single-layer analysis               *
+C                      'ISO3': full three-layer analysis               *
+C                      'IS2' : IPyC/SiC two-layer analysis             *
+C                      'SO2' : SiC/OPyC two-layer analysis             *
+C                      'S1'  : SiC single-layer analysis               *
 C    PSTATE         C: Indicates the current particle state            *
 C    FAILUREPATH    C: Records the path a failed particle undertake    *
 C    NCHAR          I: Counts number of characters in FAILUREPATH      *
@@ -4206,25 +4200,25 @@ C    OSWT(0:NDEG)   D: Array of length NDEG+1 storing coefficients of  *
 C                      the polynomial of OPyC tangential swelling rate *
 C  /CRACKED_PYC/ :  Quantities related to cracked PyC layers           *
 C    EPIRCP(1:NDIV) D: Array recording the elastic radial strains of   *
-C					 fully relaxed PyC layers at point of cracking.  *
-C					 The symbol means 'Epsilon R of C prime'         *
+C                      fully relaxed PyC layers at point of cracking.  *
+C                      The symbol means 'Epsilon R of C prime'         *
 C    EPITCP(1:NDIV) D: Array recording the elastic tangential strains  *
-C					 of fully relaxed PyC layers at point of cracking*
-C					 The symbol means 'Epsilon T of C prime'         *
+C                      of fully relaxed PyC layers at point of cracking*
+C                      The symbol means 'Epsilon T of C prime'         *
 C    URCP(1:NDIV)   D: Array recording the elastic radial displacement *
-C					 of fully relaxed PyC layers at point of cracking*
-C					 The symbol means 'Ur of C prime'                *
+C                      of fully relaxed PyC layers at point of cracking*
+C                      The symbol means 'Ur of C prime'                *
 C    KIIPYC(MPa.um^1/2) D:                                             *
-C					 Stress intensity factor in IPyC layer           *
+C                      Stress intensity factor in IPyC layer           *
 C    KIOPYC(MPa.um^1/2) D:                                             *
-C					 Stress intensity factor in OPyC layer           *
+C                      Stress intensity factor in OPyC layer           *
 C    KI1 (MPa.um^1/2)D: Stress intensity factor from IPyC crack        *
 C    KI2 (MPa.um^1/2)D: Stress intensity factor from OPyC crack        *
 C    SHEARIPYC(MPa.um)  D:                                             *
-C					 The shear force per unit length on SiC surface  *
+C                      The shear force per unit length on SiC surface  *
 C                      induced by IPyC crack                           *
 C    SHEAROPYC(MPa.um)  D:                                             *
-C					 The shear force per unit length on SiC surface  *
+C                      The shear force per unit length on SiC surface  *
 C                      induced by OPyC crack                           *
 C    DF(10^21nvt)   D: Incremental fluence since last step             *
 C                                                                      *
