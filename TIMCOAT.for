@@ -50,7 +50,7 @@ C                                                                      *
 C  Changes:                                                            *
 C  1.  The model now includes fission product attack of the SiC        *	                                                    
 C  2.  The model now accounts for failure due to the amoeba effect     *
-C	         	                                                       *
+C                                                                      *
 C***********************************************************************
 C
 C  Description of main program variables
@@ -1043,17 +1043,11 @@ C
 	CALL RANDOM_NUMBER(RN)
 	Z = RN    !Initialize random number generator
 C
-C  Run TIMCOAT as Version 1 or as Version 2
-C  Version 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
-C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo',
-C     &                    ' me no likey' 
-C      READ(IKEY,*) VERSIONSWITCH
-C      WRITE(ITERM,*) '(v1 = 1, v2 = 2) why is this thing stupid? dumbo'
-C      READ(IKEY,*) VERSIONSWITCH
-C      WRITE(ITERM,*) 'Run TIMCOAT as Version 1 or 2 (v1 = 1, v2 = 2)'
-C      READ(IKEY,*) MSWITCH
-C
-      MSWITCH = 2
+C  Run TIMCOAT in mode 1 or mode 2
+C  Mode 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
+      WRITE(ITERM,*) 'Run TIMCOAT with Amoeba effect with Pd and',
+     & 	' fission product corrosion of SiC? (no = 1, yes = 2)'
+      READ(IKEY,*) MSWITCH
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
 C  irradiation experiment simulation, or constant irradiation simulation)
@@ -1668,14 +1662,16 @@ C  Switch to run TIMCOAT as mode 1 or mode 2
 C  Calculate the kernel migration distance if mode 2 is ON (MSWITCH = 2):				
       IF (MSWITCH .EQ. 2)  THEN
            IF (FUELTYPE .EQ. 'UO2') THEN
-            KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
+              KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
            ELSE
-	        KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
+	      KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
            END IF
            AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
 	   TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
            MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
       ELSE
+           KMC = 0.D0
+           MD = 0.D0
       END IF
 C
 C
@@ -1687,6 +1683,10 @@ C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
 	      R2=R2+DCORR
 	      WRITE(CORR,*) N, OPERTIME, R3
       ELSE
+           DCORR = 0
+           R3=R3+DCORR
+	   R2=R2+DCORR
+	   WRITE(CORR,*) N, OPERTIME, R3
       END IF
 C
 C    Calculate unrestrained swelling rates in PyC
@@ -2112,13 +2112,20 @@ C
 C    Evaluate fuel failure
 C    DPD is given by eqn 3.14 from Diecker 2005
 C    DPD = distance of Pd penetration
-C      IF (MSWITCH.EQ.2) THEN
-      IF(RUNIRR .EQ. 'FAILURE') THEN
-       DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &        (T_PARTICLE(3)+273.15)))        
-       CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+      IF (MSWITCH.EQ.2) THEN
+          IF(RUNIRR .EQ. 'FAILURE') THEN
+          DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+     &            (T_PARTICLE(3)+273.15)))        
+          CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
-      END IF
+          END IF
+      ELSE
+          IF (RUNIRR .EQ. 'FAILURE') THEN
+          DPD = 0.D0
+          CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                     OPERTIME, DT, MD)
+          END IF
+      END IF    
 C
 C    Write to debug file of material strength data
 		  IF((.NOT.PARAMETRIC_STUDY).AND. DEBUG .AND. NOMINAL) THEN
@@ -2727,12 +2734,18 @@ C    Register end-of-life mean tangential stresses in layers
 		  SIGLSIC  = SIGTSIC
 C
 C    Evaluate fuel failure, do NOT do so if performing parametric study
-		  IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
-	        DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &        (T_PARTICLE(3)+273.15)))  
-			CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+      IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+          IF (MSWITCH .EQ. 2) THEN
+              DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+     &              (T_PARTICLE(3)+273.15)))  
+              CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
-		  END IF
+          ELSE
+              DPD = 0.0D0
+              CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                     OPERTIME, DT, MD)
+          END IF
+      END IF    
 C
 C    Write to debug file of material strength data
 		  IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
@@ -3185,19 +3198,25 @@ C    Register end-of-life tangential stresses in layers
 		SIGLSIC  = SIGTSIC
 C
 C    Evaluate fuel failure, do NOT do so if performing parametric study
-		IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+      IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+          IF (MSWITCH .EQ. 2) THEN
               DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &        (T_PARTICLE(3)+273.15)))     
-			CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &              (T_PARTICLE(3)+273.15)))     
+              CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
-		END IF
+          ELSE
+              DPD = 0.D0
+              CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                     OPERTIME, DT, MD)
+          END IF
+      END IF
 C
 C    Write to debug file of material strength data
-		IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
-		  WRITE(IDBG, 623) HCARDB(J,4), IPYCF, SIGFIPYC, SICF, 
-     &			SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
-     &			KI1, KI2
-		END IF
+      IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
+         WRITE(IDBG, 623) HCARDB(J,4), IPYCF, SIGFIPYC, SICF, 
+     &         SIGFSIC, OPYCF, SIGFOPYC, KICSIC, KIIPYC, KIOPYC,
+     &         KI1, KI2
+      END IF
 C
 C    Create histograms here
           IF(HISTOGRAM) THEN
@@ -4171,10 +4190,10 @@ C                      0:  fracture induced by IPyC cracking           *
 C                      1:  overpressure rupture                        *
 C                      2:  amoeba effect                               *
 C    MCODE          C: Indicates the type of analysis to perform       *
-C					 'ISO3': full three-layer analysis               *
-C					 'IS2' : IPyC/SiC two-layer analysis             *
-C					 'SO2' : SiC/OPyC two-layer analysis             *
-C					 'S1'  : SiC single-layer analysis               *
+C			'ISO3': full three-layer analysis              *
+C			'IS2' : IPyC/SiC two-layer analysis            *
+C			'SO2' : SiC/OPyC two-layer analysis            *
+C			'S1'  : SiC single-layer analysis              *
 C    PSTATE         C: Indicates the current particle state            *
 C    FAILUREPATH    C: Records the path a failed particle undertake    *
 C    NCHAR          I: Counts number of characters in FAILUREPATH      *
@@ -4206,25 +4225,25 @@ C    OSWT(0:NDEG)   D: Array of length NDEG+1 storing coefficients of  *
 C                      the polynomial of OPyC tangential swelling rate *
 C  /CRACKED_PYC/ :  Quantities related to cracked PyC layers           *
 C    EPIRCP(1:NDIV) D: Array recording the elastic radial strains of   *
-C					 fully relaxed PyC layers at point of cracking.  *
-C					 The symbol means 'Epsilon R of C prime'         *
+C                      fully relaxed PyC layers at point of cracking.  *
+C                      The symbol means 'Epsilon R of C prime'         *
 C    EPITCP(1:NDIV) D: Array recording the elastic tangential strains  *
-C					 of fully relaxed PyC layers at point of cracking*
-C					 The symbol means 'Epsilon T of C prime'         *
+C                      of fully relaxed PyC layers at point of cracking*
+C                      The symbol means 'Epsilon T of C prime'         *
 C    URCP(1:NDIV)   D: Array recording the elastic radial displacement *
-C					 of fully relaxed PyC layers at point of cracking*
-C					 The symbol means 'Ur of C prime'                *
+C                      of fully relaxed PyC layers at point of cracking*
+C                      The symbol means 'Ur of C prime'                *
 C    KIIPYC(MPa.um^1/2) D:                                             *
-C					 Stress intensity factor in IPyC layer           *
+C                         Stress intensity factor in IPyC layer        *
 C    KIOPYC(MPa.um^1/2) D:                                             *
-C					 Stress intensity factor in OPyC layer           *
+C                      Stress intensity factor in OPyC layer           *
 C    KI1 (MPa.um^1/2)D: Stress intensity factor from IPyC crack        *
 C    KI2 (MPa.um^1/2)D: Stress intensity factor from OPyC crack        *
 C    SHEARIPYC(MPa.um)  D:                                             *
-C					 The shear force per unit length on SiC surface  *
+C                      The shear force per unit length on SiC surface  *
 C                      induced by IPyC crack                           *
 C    SHEAROPYC(MPa.um)  D:                                             *
-C					 The shear force per unit length on SiC surface  *
+C                      The shear force per unit length on SiC surface  *
 C                      induced by OPyC crack                           *
 C    DF(10^21nvt)   D: Incremental fluence since last step             *
 C                                                                      *
