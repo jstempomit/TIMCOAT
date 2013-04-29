@@ -1046,7 +1046,7 @@ C
 C  Run TIMCOAT as mode 1 or as mode 2
 C  Mode 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoeba effect.
       WRITE(ITERM,*) 'Run TIMCOAT with amoeba effect, Pd, and fission',
-                      ' product corrosion of SiC?  (no = 1, yes = 2)'
+     &                ' product corrosion of SiC?  (no = 1, yes = 2)'
       READ(IKEY,*) MSWITCH
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
@@ -1664,12 +1664,16 @@ C  Calculate the kernel migration distance if mode 2 is ON (MSWITCH = 2):
            IF (FUELTYPE .EQ. 'UO2') THEN
             KMC =1.7E-7*exp(-9.21E4/(8.314*(T_PARTICLE(3)+273.15)))
            ELSE
-	        KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
+	    KMC = 0.62*exp(-3.11E5/(8.314*(T_PARTICLE(3)+273.15)))
            END IF
            AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
 	   TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6) 
            MD = MD + (KMC*DT*(1/AVGT**2)*TGRAD)/1E-6
       ELSE
+           KMC = 0.D0
+           AVGT = 273.15+((T_PARTICLE(0) + T_PARTICLE(5))/2)
+	   TGRAD = (T_PARTICLE(0) - T_PARTICLE(5))/(R5*1E-6)
+	   MD = 0.D0           
       END IF
 C
 C
@@ -1677,10 +1681,12 @@ C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
       IF (MSWITCH .EQ. 2)  THEN
           DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
      &              (T_PARTICLE(3)+273.15)))	       
-	      R3=R3+DCORR
-	      R2=R2+DCORR
-	      WRITE(CORR,*) N, OPERTIME, R3
+	  R3=R3+DCORR
+	  R2=R2+DCORR
+	  WRITE(CORR,*) N, OPERTIME, R3
       ELSE
+          DCORR = 0
+          WRITE(CORR,*) N, OPERTIME, R3
       END IF
 C
 C    Calculate unrestrained swelling rates in PyC
