@@ -656,7 +656,7 @@ C  Other variables
      &          NBURP, NCASES, NDUMPED, LENGTH_OF_FILE, I, J, K, N
 	INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
 	INTEGER   IKISIC, CORR
-	INTEGER*4 MSWITCH
+	INTEGER MSWITCH
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
 	INTEGER   NCHANNEL, NAXIAL, NLAYER
 	INTEGER   ISEED
@@ -1685,7 +1685,7 @@ C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
 	  R2=R2+DCORR
 	  WRITE(CORR,*) N, OPERTIME, R3
       ELSE
-          DCORR = 0
+          DCORR = 0.D0
           WRITE(CORR,*) N, OPERTIME, R3
       END IF
 C
