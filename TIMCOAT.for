@@ -1685,8 +1685,14 @@ C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
 	  R2=R2+DCORR
 	  WRITE(CORR,*) N, OPERTIME, R3
       ELSE
-          DCORR = 0.D0
-          WRITE(CORR,*) N, OPERTIME, R3
+          WRITE(*,*) MSWITCH
+          WRITE(*,*) PSWITCH
+          WRITE(*,*) MSWITCH
+          STOP          
+C          DCORR = 0.D0
+C          R3=R3+DCORR
+C          R2=R2+DCORR
+C          WRITE(CORR,*) N, OPERTIME, R3
       END IF
 C
 C    Calculate unrestrained swelling rates in PyC
