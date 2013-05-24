@@ -10,12 +10,10 @@ include OBJECTS
 # User Options
 #===============================================================================
 
-COMPILER = intel
+COMPILER = gnu
 DEBUG    = no
 PROFILE  = no
-OPTIMIZE = no
-USE_MPI  = no
-USE_HDF5 = no
+OPTIMIZE = yes
 
 #===============================================================================
 # Add git SHA-1 hash
@@ -29,7 +27,7 @@ GIT_SHA1 = $(shell git log -1 | head -n 1 | awk '{print $$2}')
 
 ifeq ($(COMPILER),gnu)
   F90 = gfortran
-  F90FLAGS := -cpp -fbacktrace -DNO_F2008
+  F90FLAGS := -cpp -fbacktrace -DNO_F2008 -ffixed-line-length-120 -w
   LDFLAGS =
 
   # Debugging
@@ -79,156 +77,6 @@ ifeq ($(COMPILER),intel)
 endif
 
 #===============================================================================
-# PGI compiler options
-#===============================================================================
-
-ifeq ($(COMPILER),pgi)
-  F90 = pgf90
-  F90FLAGS := -Mpreprocess -DNO_F2008 -Minform=inform -traceback
-  LDFLAGS =
-
-  # Debugging
-  ifeq ($(DEBUG),yes)
-    F90FLAGS += -g -Mbounds -Mchkptr -Mchkstk
-    LDFLAGS  += -g
-  endif
-
-  # Profiling
-  ifeq ($(PROFILE),yes)
-    F90FLAGS += -pg
-    LDFLAGS  += -pg
-  endif
-
-  # Optimization
-  ifeq ($(OPTIMIZE),yes)
-    F90FLAGS += -fast -Mipa
-  endif
-endif
-
-#===============================================================================
-# IBM XL compiler options
-#===============================================================================
-
-ifeq ($(COMPILER),ibm)
-  F90 = xlf2003
-  F90FLAGS := -WF,-DNO_F2008 -O2
-
-  # Debugging
-  ifeq ($(DEBUG),yes)
-    F90FLAGS += -g -C -qflag=i:i -u
-    LDFLAGS  += -g
-  endif
-
-  # Profiling
-  ifeq ($(PROFILE),yes)
-    F90FLAGS += -p
-    LDFLAGS  += -p
-  endif
-
-  # Optimization
-  ifeq ($(OPTIMIZE),yes)
-    F90FLAGS += -O3
-  endif
-endif
-
-#===============================================================================
-# Cray compiler options
-#===============================================================================
-
-ifeq ($(COMPILER),cray)
-  F90 = ftn
-  F90FLAGS := -e Z -m 0
-
-  # Debugging
-  ifeq ($(DEBUG),yes)
-    F90FLAGS += -g -R abcnsp -O0
-    LDFLAGS  += -g
-  endif
-endif
-
-#===============================================================================
-# PETSc compiler options
-#===============================================================================
-
-ifeq ($(COMPILER),petsc)
-
-  # variables
-  PETSC_DIR=/opt/petsc/petsc_gfortran
-  PETSC_ARCH=arch-linux2-c-debug
-  SLEPC_DIR=/opt/petsc/slepc-3.3-p2
-
-  # include petsc variables
-  include ${SLEPC_DIR}/conf/slepc_common
-
-  # standard options
-  F90 = ${FC_LINKER} 
-  F90FLAGS := -cpp -fbacktrace -DNO_F2008  \
-              -I${PETSC_DIR}/include -I${SLEPC_DIR}/include \
-              -DMPI -DPETSC
-  LDFLAGS = ${SLEPC_LIB}
-
-  # Debugging
-  ifeq ($(DEBUG),yes)
-    F90FLAGS += -g -Wall -pedantic -fbounds-check \
-                -ffpe-trap=invalid,zero,overflow,underflow
-    LDFLAGS += -g
-  endif
-
-  # Profiling
-  ifeq ($(PROFILE),yes)
-    F90FLAGS += -pg
-    LDFLAGS += -pg
-  endif
-
-  # Optimization
-  ifeq ($(OPTIMIZE),yes)
-    F90FLAGS += -O3
-  endif
-
-endif
-
-#===============================================================================
-# Miscellaneous compiler options
-#===============================================================================
-
-# Use MPI for parallelism
-
-ifeq ($(USE_MPI),yes)
-  MPI_ROOT = /opt/mpich2/1.5b2-$(COMPILER)
-  F90 = $(MPI_ROOT)/bin/mpif90
-  F90FLAGS += -DMPI
-endif
-
-# Use HDF5 for output
-
-ifeq ($(USE_HDF5),yes)
-  HDF5_ROOT = /opt/hdf5/hdf5-1.8.9/hdf5
-  F90FLAGS += -DHDF5 -I${HDF5_ROOT}/include
-  LDFLAGS += -L${HDF5_ROOT}/lib ${HDF5_ROOT}/lib/libhdf5hl_fortran.a \
-             ${HDF5_ROOT}/lib/libhdf5_hl.a ${HDF5_ROOT}/lib/libhdf5_fortran.a \
-             ${HDF5_ROOT}/lib/libhdf5.a -lz -lrt -lm -Wl,-rpath -Wl,${HDF5_ROOT}/lib
-endif
-
-
-#===============================================================================
-# Options for IBM Blue Gene/P ANL supercomputer
-#===============================================================================
-
-ifeq ($(MACHINE),bluegene)
-  F90 = /bgsys/drivers/ppcfloor/comm/xl/bin/mpixlf2003
-  F90FLAGS = -WF,-DNO_F2008,-DMPI -O3
-endif
-
-#===============================================================================
-# Options for Cray XK6 ORNL Titan supercomputer
-#===============================================================================
-
-ifeq ($(MACHINE),crayxk6)
-  F90 = ftn
-  F90FLAGS += -DMPI
-endif
-
-#===============================================================================
 # Targets
 #===============================================================================
 
@@ -236,18 +84,18 @@ all: $(program)
 $(program): $(objects)
 	$(F90) $(objects) -o $@ $(LDFLAGS)
 clean:
-	@del *.obj *.mod $(program)
+	@rm *.o $(program)
 neat:
-	@del *.obj *.mod
+	@rm *.o
 
 #===============================================================================
 # Rules
 #===============================================================================
 
-.SUFFIXES: .for .obj
-.PHONY: all xml-fortran clean neat distclean 
+.SUFFIXES: .for .o
+.PHONY: all clean neat distclean 
 
-%.obj: %.for
+%.o: %.for
 	$(F90) $(F90FLAGS) -c $<
 
 #===============================================================================

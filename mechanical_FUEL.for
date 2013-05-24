@@ -342,7 +342,7 @@ C
 C
 C  If IPyC layer debonds
 C
-      IF (DEBONDI .EQ. .TRUE.) THEN
+      IF (DEBONDI .EQV. .TRUE.) THEN
         A3 = (X2/C)*(OSWR(3) - OSWT(3))
         A2 = (X2/C)*((OSWR(2) - OSWT(2)) - X3*K*A3)
         A1 = (X2/C)*((OSWR(1) - OSWT(1)) - X2*K*A2)
@@ -374,7 +374,7 @@ C
 C
 C  If IPyC layer is intact
 C
-      ELSE IF (DEBONDI .EQ. .FALSE.) THEN
+      ELSE IF (DEBONDI .EQV. .FALSE.) THEN
         H0 = (X3*K*N5/(X2*A))*PRESS/FLU -
      A       (N5*R32L/A)*(ISWR(0) - ISWT(0)) -
      B       (N5*(X1 - R33/R23)/(X3*A))*(ISWR(0) + X2*ISWT(0))
@@ -388,7 +388,7 @@ C
 C
 C  If OPyC layer debonds
 C
-        IF (DEBONDO .EQ. .TRUE.) THEN
+        IF (DEBONDO .EQV. .TRUE.) THEN
           M1 = X3*C*N5/(X4*A)
           K3 = - X4*A*H3/(X3*C*N5)
           K2 = - X4*A*(H2 - X3*K3)/(X3*C*N5)
@@ -401,7 +401,7 @@ C
 C
 C  If OPyC layer is intact
 C
-        ELSE IF (DEBONDO .EQ. .FALSE.) THEN
+        ELSE IF (DEBONDO .EQV. .FALSE.) THEN
           A3 = (X2/C)*(OSWR(3) - OSWT(3))
           A2 = (X2/C)*((OSWR(2) - OSWT(2)) - X3*K*A3)
           A1 = (X2/C)*((OSWR(1) - OSWT(1)) - X2*K*A2)

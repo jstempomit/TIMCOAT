@@ -22,17 +22,17 @@ C***********************************************************************
 C                                                                      *
       SUBROUTINE Greeting()
 C
-	USE DFLOGM
+	!USE DFLOGM
 	IMPLICIT NONE
 	INCLUDE 'resource.fd'
 C
 	INTEGER retint
 	LOGICAL retlog
-	TYPE (dialog) dlg_mpbr
+	!TYPE (dialog) dlg_mpbr
 C  Display greeting window
-	retlog = DlgInit( IDD_DIALOG_GREETING, dlg_mpbr )
-	retint = DlgModal( dlg_mpbr )
-	Call DlgUninit( dlg_mpbr )
+	!retlog = DlgInit( IDD_DIALOG_GREETING, dlg_mpbr )
+	!retint = DlgModal( dlg_mpbr )
+	!Call DlgUninit( dlg_mpbr )
 C
 	END
 C                                                                      *
@@ -63,23 +63,23 @@ C***********************************************************************
 C                                                                      *
       SUBROUTINE InputDialog(InputFilename)
 C
-	USE DFLOGM
+	!USE DFLOGM
 	IMPLICIT NONE
 	INCLUDE 'resource.fd'
 C
 	CHARACTER*256 InputFilename
 	INTEGER retint
 	LOGICAL retlog
-	TYPE (dialog) dlg_mpbr
+	!TYPE (dialog) dlg_mpbr
 C  Reactor core and TRISO fuel input data dialog boxes
 C    Initialize the dialog box
-	retlog = DlgInit(IDD_DIALOG_INPUT, dlg_mpbr)
-	retlog = DlgSet( dlg_mpbr, IDC_EDIT_MPBRINPUT, "PBMR" )
+	!retlog = DlgInit(IDD_DIALOG_INPUT, dlg_mpbr)
+	!retlog = DlgSet( dlg_mpbr, IDC_EDIT_MPBRINPUT, "PBMR" )
 !    Activate the modal dialog.
-	retint = DlgModal( dlg_mpbr )
-	retlog = DlgGet( dlg_mpbr, IDC_EDIT_MPBRINPUT, InputFilename)
+	!retint = DlgModal( dlg_mpbr )
+	!retlog = DlgGet( dlg_mpbr, IDC_EDIT_MPBRINPUT, InputFilename)
 C Release dialog resources	
-	CALL DlgUninit( dlg_mpbr )
+	!CALL DlgUninit( dlg_mpbr )
 C
 	END
 C                                                                      *
@@ -110,7 +110,7 @@ C***********************************************************************
 C                                                                      *
       SUBROUTINE PowerTypeDialog(PowerType)
 C
-	USE DFLOGM
+	!USE DFLOGM
 	IMPLICIT NONE
 	INCLUDE 'resource.fd'
 C
@@ -118,25 +118,25 @@ C
 	INTEGER retint
 	LOGICAL retlog
 	LOGICAL PushedState
-	TYPE (dialog) dlg_ptype
+	!TYPE (dialog) dlg_ptype
 C    Initialize the dialog box
-	retlog = DlgInit(IDD_DIALOG_POWERTYPE, dlg_ptype)
-	retlog = DlgSet( dlg_ptype, IDC_RADIO_POWER1, .TRUE. )
+	!retlog = DlgInit(IDD_DIALOG_POWERTYPE, dlg_ptype)
+	!retlog = DlgSet( dlg_ptype, IDC_RADIO_POWER1, .TRUE. )
 !    Activate the modal dialog.
-	retint = DlgModal( dlg_ptype )
-	retlog = DlgGet( dlg_ptype, IDC_RADIO_POWER1, PushedState )
-	IF (.NOT. PushedState) THEN
-	  retlog = DlgGet( dlg_ptype, IDC_RADIO_POWER2, PushedState )
-	  IF (.NOT. PushedState) THEN
-	    PowerType = 3
-	  ELSE
-	    PowerType = 2
-	  END IF
-	ELSE
-	  PowerType = 1
-	END IF
+	!retint = DlgModal( dlg_ptype )
+	!retlog = DlgGet( dlg_ptype, IDC_RADIO_POWER1, PushedState )
+	!IF (.NOT. PushedState) THEN
+	!  retlog = DlgGet( dlg_ptype, IDC_RADIO_POWER2, PushedState )
+	!  IF (.NOT. PushedState) THEN
+	!    PowerType = 3
+	!  ELSE
+	!    PowerType = 2
+	!  END IF
+	!ELSE
+	!  PowerType = 1
+	!END IF
 C Release dialog resources	
-	CALL DlgUninit( dlg_ptype )
+	!CALL DlgUninit( dlg_ptype )
 C
 	END
 C                                                                      *

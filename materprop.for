@@ -232,7 +232,7 @@ C
       DOUBLE PRECISION EISO_D, DE_D, SCALING
       DOUBLE PRECISION ER_T_F_BAF, ET_T_F_BAF, ER_T_F, ET_T_F, 
      &                 ER_F, ET_F, ER, ET, DE, SR, ST
-	DOUBLE PRECISION EISO_DOT, DE_DOT, ER_DOT, ET_DOT
+	     DOUBLE PRECISION EISO_DOT, DE_DOT, ER_DOT, ET_DOT
       DOUBLE PRECISION COEFF(0:3)
       DOUBLE COMPLEX ROOT(3)
       INTEGER  CRMAX, DGROUPS, TGROUPS, BGROUPS
@@ -329,7 +329,7 @@ C  Step 1: Convert the given set of density, BAF0 and coating rate to BAF01 at d
 c        DENSITY = BAF_D_CR(1,-1)         !Currently BAF_D_CR(1,-1)=1.00
         INDEX = 1
         CALL ERR_HANDLER('SUBROUTINE SWELLU: Density of IPyC/OPyC layer
-     & below lower limit in BAF_D_CR', 75, 0, 0, IERR)
+     &         below lower limit in BAF_D_CR', 75, 0, 0, IERR)
       ELSE IF(DENSITY.GT.BAF_D_CR(DGROUPS,-1)) THEN
 c        DENSITY = BAF_D_CR(DGROUPS,-1)   !Currently BAF_D_CR(DGROUPS,-1)=1.99
         INDEX = DGROUPS - 1
@@ -348,7 +348,7 @@ c        DENSITY = BAF_D_CR(DGROUPS,-1)   !Currently BAF_D_CR(DGROUPS,-1)=1.99
      &            (BAF_D_CR(INDEX+1,-1)-BAF_D_CR(INDEX,-1))
 2910  CONTINUE
 C   look for coating rate based on the given BAF0
-	BAF0B = BAF0
+	     BAF0B = BAF0
       IF(BAF0.GT.BAF_CR(0)) THEN   !BAF0 descends as coating rate increases
 c        BAF0B = BAF_CR(0)
         INDEX = 0
@@ -361,10 +361,10 @@ c        BAF0B = BAF_CR(CRMAX)
      & below lower limit in BAF_D_CR', 72, 0, 0, IERR)
       ELSE
 C        BAF0B = BAF0
-	  CALL LOCATE_ARRAY(BAF_CR,CRMAX+1,0,BAF0B,INDEX)
+	       CALL LOCATE_ARRAY(BAF_CR,CRMAX+1,0,BAF0B,INDEX)
         IF((INDEX.LT.0).OR.(INDEX.GT.(CRMAX-1))) THEN
           CALL ERR_HANDLER('SUBROUTINE SWELLU: Out of Array BAF_D_CR 
-     &					  range', 45, 0, 2, IERR)
+     &					      range', 45, 0, 2, IERR)
         END IF
       END IF
       CRATE = ((BAF0B-BAF_CR(INDEX))*FLOAT(INDEX+1) + (BAF_CR(INDEX+1)
@@ -373,7 +373,7 @@ C   convert to BAF01 at density = 1.96g/cm^3, which is given by BAF_D_CR(7,*)
       BAF01 = (CRATE-INDEX)*BAF_D_CR(7,INDEX+1) + 
      &        (INDEX+1-CRATE)*BAF_D_CR(7,INDEX)
 C  Step 2: Obtain Epi_ISO and the rate of Epi_ISO for the given T and Phi at the density of 1.96g/cm^3
-	TEMP0 = TEMP
+	     TEMP0 = TEMP
       IF(TEMP.LE.EISO_T_F(1,-1)) THEN
 c        TEMP0 = EISO_T_F(1,-1)           !Currently EISO_T_F(1,-1)=600.0
         INDEX = 1
@@ -389,17 +389,17 @@ c        TEMP0 = TEMP
         CALL LOCATE_ARRAY(EISO_T_F(:,-1), TGROUPS, 1, TEMP, INDEX)
         IF((INDEX.LT.1).OR.(INDEX.GT.(TGROUPS-1))) THEN
           CALL ERR_HANDLER('SUBROUTINE SWELLU: Out of Array EISO_T_F 
-     &                range', 45, 0, 2, IERR)
+     &           range', 45, 0, 2, IERR)
         END IF
       END IF
       EISO = 0.0
-	EISO_DOT = 0.0
+      EISO_DOT = 0.0
       DO 2920 I=0,NDEG
         EISO_F(I)=((TEMP0-EISO_T_F(INDEX,-1))*EISO_T_F(INDEX+1,I)+
      &            (EISO_T_F(INDEX+1,-1)-TEMP0)*EISO_T_F(INDEX,I))/
      &            (EISO_T_F(INDEX+1,-1)-EISO_T_F(INDEX,-1))
         EISO = EISO + EISO_F(I)*FLUENCE**I
-	  IF(I.NE.0) EISO_DOT = EISO_DOT + I*EISO_F(I)*FLUENCE**(I-1)
+	       IF(I.NE.0) EISO_DOT = EISO_DOT + I*EISO_F(I)*FLUENCE**(I-1)
 2920  CONTINUE
 C  Step 3: Adjust Epi_ISO and the rate of Epi_ISO for density difference
       CALL LOCATE_ARRAY(EISO_D(:,-1),9,1,DENSITY,INDEX)
@@ -409,11 +409,11 @@ C  Step 3: Adjust Epi_ISO and the rate of Epi_ISO for density difference
 C   Take the ratio of Epi_ISO at this density with respect to that at 1.96g/cm^3, given by EISO_D(8.0)
       SCALING = SCALING/EISO_D(8,0)
       EISO = EISO*SCALING
-	EISO_DOT = EISO_DOT*SCALING
+	     EISO_DOT = EISO_DOT*SCALING
 C
-	IF(BAF0.EQ.1.0D0) THEN
-	  SR_DOT = EISO_DOT
-	  ST_DOT = EISO_DOT
+	     IF(BAF0.EQ.1.0D0) THEN
+	       SR_DOT = EISO_DOT
+	       ST_DOT = EISO_DOT
 C   Change from percentage to real dimensional change rate
         SR_DOT = SR_DOT/100.0D0
         ST_DOT = ST_DOT/100.0D0
@@ -421,34 +421,34 @@ C   Change from percentage to real dimensional change rate
       END IF
 C  Step 4: Obtain Epi_r and Epi_t and Delta_E and their rates at T, Phi, BAF01 and density = 1.96
       DO 2940 I=1,TGROUPS
-	  IF(BAF01 .LE. ER_T_F_BAF(I,1,-1)) THEN
-	    INDEXR = 1
-	    CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
-     & below lower limit in ER_T_F_BAF', 74, 0, 0, IERR)
-	  ELSE IF(BAF01 .GE. ER_T_F_BAF(I,BGROUPS,-1)) THEN
-	    INDEXR = BGROUPS - 1
-	    CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
-     & above upper limit in ER_T_F_BAF', 74, 0, 0, IERR)
-	  ELSE
-	    CALL LOCATE_ARRAY(ER_T_F_BAF(I,:,-1),BGROUPS,1,BAF01,INDEXR)
-	  END IF
+	       IF(BAF01 .LE. ER_T_F_BAF(I,1,-1)) THEN
+	         INDEXR = 1
+	         CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
+     &           below lower limit in ER_T_F_BAF', 74, 0, 0, IERR)
+	       ELSE IF(BAF01 .GE. ER_T_F_BAF(I,BGROUPS,-1)) THEN
+	         INDEXR = BGROUPS - 1
+	         CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
+     &           above upper limit in ER_T_F_BAF', 74, 0, 0, IERR)
+	       ELSE
+	         CALL LOCATE_ARRAY(ER_T_F_BAF(I,:,-1),BGROUPS,1,BAF01,INDEXR)
+	       END IF
         DO 2930 J=0,NDEG
           ER_T_F(I,J)=((BAF01-ER_T_F_BAF(I,INDEXR,-1))*
      &              ER_T_F_BAF(I,INDEXR+1,J)+(ER_T_F_BAF(I,INDEXR+1,-1)-
      &              BAF01)*ER_T_F_BAF(I,INDEXR,J))/
      &              (ER_T_F_BAF(I,INDEXR+1,-1)-ER_T_F_BAF(I,INDEXR,-1))
 2930    CONTINUE
-	  IF(BAF01 .LE. ET_T_F_BAF(I,1,-1)) THEN
-	    INDEXT = 1
-	    CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
-     & below lower limit in ET_T_F_BAF', 74, 0, 0, IERR)
-	  ELSE IF(BAF01 .GE. ET_T_F_BAF(I,BGROUPS,-1)) THEN
-	    INDEXT = BGROUPS - 1
-	    CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
-     & above upper limit in ET_T_F_BAF', 74, 0, 0, IERR)
-	  ELSE
-	    CALL LOCATE_ARRAY(ET_T_F_BAF(I,:,-1),BGROUPS,1,BAF01,INDEXT)
-	  END IF
+	       IF(BAF01 .LE. ET_T_F_BAF(I,1,-1)) THEN
+	         INDEXT = 1
+	         CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
+     &           below lower limit in ET_T_F_BAF', 74, 0, 0, IERR)
+	       ELSE IF(BAF01 .GE. ET_T_F_BAF(I,BGROUPS,-1)) THEN
+	         INDEXT = BGROUPS - 1
+	         CALL ERR_HANDLER('SUBROUTINE SWELLU: BAF0 of IPyC/OPyC layer
+     &           above upper limit in ET_T_F_BAF', 74, 0, 0, IERR)
+	       ELSE
+	         CALL LOCATE_ARRAY(ET_T_F_BAF(I,:,-1),BGROUPS,1,BAF01,INDEXT)
+	       END IF
         DO 2935 J=0,NDEG
           ET_T_F(I,J)=((BAF01-ET_T_F_BAF(I,INDEXT,-1))*
      &              ET_T_F_BAF(I,INDEXT+1,J)+(ET_T_F_BAF(I,INDEXT+1,-1)-
@@ -473,19 +473,19 @@ c     & above upper limit in ER_T_F and ET_T_F', 69, 0, 0, IERR)
         CALL LOCATE_ARRAY(ET_T_F(:,-1),TGROUPS,1,TEMP0,INDEXT)
         IF((INDEXR.LT.1).OR.(INDEXR.GT.(TGROUPS-1))) THEN
           CALL ERR_HANDLER('SUBROUTINE SWELLU: Out of Array ER_T_F 
-     &                range', 45, 0, 2, IERR)
+     &           range', 45, 0, 2, IERR)
         END IF
         IF((INDEXT.LT.1).OR.(INDEXT.GT.(TGROUPS-1))) THEN
           CALL ERR_HANDLER('SUBROUTINE SWELLU: Out of Array ET_T_F 
-     &                range', 45, 0, 2, IERR)
+     &           range', 45, 0, 2, IERR)
         END IF
       END IF
       ER = 0.0D0
       ET = 0.0D0
       DE = 0.0D0
-	ER_DOT = 0.0D0
-	ET_DOT = 0.0D0
-	DE_DOT = 0.0D0
+	     ER_DOT = 0.0D0
+	     ET_DOT = 0.0D0
+	     DE_DOT = 0.0D0
       DO 2950 I=0,NDEG
         ER_F(I)=((TEMP0-ER_T_F(INDEXR,-1))*ER_T_F(INDEXR+1,I) + 
      &          (ER_T_F(INDEXR+1,-1)-TEMP0)*ER_T_F(INDEXR,I))/
@@ -495,13 +495,13 @@ c     & above upper limit in ER_T_F and ET_T_F', 69, 0, 0, IERR)
      &          (ET_T_F(INDEXT+1,-1)-ET_T_F(INDEXT,-1))
         ER = ER + ER_F(I)*FLUENCE**I
         ET = ET + ET_F(I)*FLUENCE**I
-	  IF(I.NE.0) THEN
-	    ER_DOT = ER_DOT + I*ER_F(I)*FLUENCE**(I-1)
-	    ET_DOT = ET_DOT + I*ET_F(I)*FLUENCE**(I-1)
-	  END IF
+	       IF(I.NE.0) THEN
+	         ER_DOT = ER_DOT + I*ER_F(I)*FLUENCE**(I-1)
+	         ET_DOT = ET_DOT + I*ET_F(I)*FLUENCE**(I-1)
+	       END IF
 2950  CONTINUE
       DE = ER - ET
-	DE_DOT = ER_DOT - ET_DOT
+	     DE_DOT = ER_DOT - ET_DOT
 C  Step 5: Adjust Delta_E and the rate of it back to the input density and BAF0
       CALL LOCATE_ARRAY(DE_D(:,-1),9,1,DENSITY,INDEX)
       SCALING = ((DENSITY-DE_D(INDEX,-1))*DE_D(INDEX+1,0)+
@@ -510,11 +510,11 @@ C  Step 5: Adjust Delta_E and the rate of it back to the input density and BAF0
 C   Take the ratio of Delta_E at this density with respect to that at 1.96g/cm^3, given by DE_D(8.0)
       SCALING = SCALING/DE_D(8,0)
       DE = DE*SCALING
-	DE_DOT = DE_DOT*SCALING
+     	DE_DOT = DE_DOT*SCALING
 C  Step 6: Use Delta_E and Epi_ISO to derive Er and Et
 C    (100 - Et)**3 - Delta_E*(100- Et)**2 - (100 - Epi_ISO)**3 = 0
       IF(FLUENCE.NE.0.0D0) THEN
-	  COEFF(0)=(-1.0D0)*(100.0D0-EISO)**3
+        COEFF(0)=(-1.0D0)*(100.0D0-EISO)**3
         COEFF(2)=(-1.0D0)*DE
         CALL DZPLRC(3,COEFF,ROOT)
         ST = -100.0D0
@@ -525,13 +525,13 @@ C    (100 - Et)**3 - Delta_E*(100- Et)**2 - (100 - Epi_ISO)**3 = 0
           SR = DE + ST
         ELSE
           CALL ERR_HANDLER('SUBROUTINE SWELLU: Cannot determine 
-     & dimensional changes', 54, 0, 2, IERR)
+     &      dimensional changes', 54, 0, 2, IERR)
         END IF
-	ELSE
-	  SR = 0.0D0
-	  ST = 0.0D0
-	END IF
-	ST_DOT = (3.0D0*EISO_DOT - (100.0D0-EISO)*DE_DOT/(100.0D0-SR))/
+	     ELSE
+	       SR = 0.0D0
+	       ST = 0.0D0
+	     END IF
+	     ST_DOT = (3.0D0*EISO_DOT - (100.0D0-EISO)*DE_DOT/(100.0D0-SR))/
      &         ((100.0D0-EISO)/(100.0D0-SR)+2.0D0*(100.0D0-EISO)/
      &          (100.0D0-ST))
       SR_DOT = DE_DOT + ST_DOT

@@ -1,4 +1,3 @@
- OPENFILE: File does not exist
- RECOVERABLE error, program continuing
- Error type:      1
- 
+ SUBROUTINE SWELLU: Cannot determine                   
+ FATAL error, program terminating
+ Error type:      0

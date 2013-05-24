@@ -153,7 +153,7 @@ C***********************************************************************
 C                                                                      *
 	SUBROUTINE M_ANALYSIS(MCODE,PRESS,PAMB,FLU,SIGR,SIGT,EPIR,EPIT,UR)
 C
-      USE IMSL_LIBRARIES          ! Allow usage of IMSL libraries
+C      USE IMSL_LIBRARIES          ! Allow usage of IMSL libraries
 	PARAMETER ( NDIV = 30, IORDER = 200 )
       PARAMETER ( NDEG = 3)
 	PARAMETER ( IPATH = 1, LDA = 6, NDIM = 6, NDIM2 = 4)
@@ -532,7 +532,7 @@ C  Calculate the average-square-root of the term of order i
           PROBER = DSQRT(PROBER/NDIV)
           PROBET = DSQRT(PROBET/NDIV)
 	    IF((PROBER.LT.CRITERIA).AND.(PROBET.LT.CRITERIA)) THEN
-	      IF(CONV.EQ..FALSE.) THEN
+	      IF(CONV.EQV..FALSE.) THEN
 	        CONV = .TRUE.
 	      ELSE
 C	        WRITE(*,*) 'Convergence achieved at order i = ', I
@@ -568,7 +568,7 @@ C  change them back here before returning to the main program.
 2814          CONTINUE
 	        RETURN
 	      ENDIF
-	    ELSE IF(CONV.EQ..TRUE.) THEN
+	    ELSE IF(CONV.EQV..TRUE.) THEN
 C           WRITE(*,*) 'At Order = ',I, 'abormal'
 	      CONV = .FALSE.
 	    ENDIF
@@ -955,7 +955,7 @@ C  Calculate the average-square-root of the term of order i
           PROBER = DSQRT(PROBER/(NDIVI+NDIVS+4))
           PROBET = DSQRT(PROBET/(NDIVI+NDIVS+4))
 	    IF((PROBER.LT.CRITERIA).AND.(PROBET.LT.CRITERIA)) THEN
-	      IF(CONV.EQ..FALSE.) THEN
+	      IF(CONV.EQV..FALSE.) THEN
 	        CONV = .TRUE.
 	      ELSE
 C	        WRITE(*,*) 'Convergence achieved at order i = ', I
@@ -991,7 +991,7 @@ C  change them back here before returning to the main program.
 2914          CONTINUE
 	        RETURN
 	      ENDIF
-	    ELSE IF(CONV.EQ..TRUE.) THEN
+	    ELSE IF(CONV.EQV..TRUE.) THEN
 C           WRITE(*,*) 'At Order = ',I, 'abormal'
 	      CONV = .FALSE.
 	    ENDIF
@@ -1356,7 +1356,7 @@ C  Calculate the average-square-root of the term of order i
           PROBER = DSQRT(PROBER/(NDIV-NDIVI-2))
           PROBET = DSQRT(PROBET/(NDIV-NDIVI-2))
 	    IF((PROBER.LT.CRITERIA).AND.(PROBET.LT.CRITERIA)) THEN
-	      IF(CONV.EQ..FALSE.) THEN
+	      IF(CONV.EQV..FALSE.) THEN
 	        CONV = .TRUE.
 	      ELSE
 C	        WRITE(*,*) 'Convergence achieved at order i = ', I
@@ -1392,7 +1392,7 @@ C  change them back here before returning to the main program.
 3014          CONTINUE
 	        RETURN
 	      ENDIF
-	    ELSE IF(CONV.EQ..TRUE.) THEN
+	    ELSE IF(CONV.EQV..TRUE.) THEN
 C           WRITE(*,*) 'At Order = ',I, 'abormal'
 	      CONV = .FALSE.
 	    ENDIF

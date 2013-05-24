@@ -572,10 +572,10 @@ C                                                                       *
 C  Main program starts
 C
       PROGRAM TIMCOAT
-      INCLUDE 'link_fnl_static.h'
+C     INCLUDE 'link_fnl_static.h'
       !DEC$ OBJCOMMENT LIB:'libiomp5md.lib'
 
-      USE IMSL_LIBRARIES ! Use IMSL math and statistics libraries
+C     USE IMSL_LIBRARIES ! Use IMSL math and statistics libraries
 C
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -583,61 +583,61 @@ C  1. Reactor specifications
       DOUBLE PRECISION EOLBUP, EOLFLU, POWER, QPPP_AVG, QPPP, T_HE,
      &                 DT, OUTTIME, IRRTIME,
      &                 PEBBLE_R, PEBBLE_Z, P_CHANNEL, P_BLOCK, P_PAR
-	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_GASIN,
+      DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_GASIN,
      &                 T_GASOUT, MF_HE, PACKING
-	DOUBLE PRECISION PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
+      DOUBLE PRECISION PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                 R_IN_PEBBLE
 C  2. Particle geometry
-	DOUBLE PRECISION KERNDIA, KERNVAR, BUFFTHK, BUFFVAR, IPYCTHK,
+      DOUBLE PRECISION KERNDIA, KERNVAR, BUFFTHK, BUFFVAR, IPYCTHK,
      &                 IPYCVAR, SICTHK, SICVAR, OPYCTHK, OPYCVAR,
      &                 R10, R20, R30, R40, R50, R1, R2, R3, R4, R5,
      &                 R13, R23, R33, R43, R53
 C  3. Layer properties
-	DOUBLE PRECISION KDEN, KERND, KERNDVAR, KERNT, BDEN, BUFFD,
+      DOUBLE PRECISION KDEN, KERND, KERNDVAR, KERNT, BDEN, BUFFD,
      &                 BUFFDVAR, BUFFT, IPYCD, OPYCD, IPYCBAF0, 
      &                 IPYCBAF0I, IPYCBAFVAR, IPYCBAFI, IPYCCRATE, 
      &                 IPYCLC, OPYCBAF0, OPYCBAF0I, OPYCBAFVAR, 
      &                 OPYCBAFI, OPYCCRATE, OPYCLC
 C  4. Thermal expansion coefficients, creep coefficients and elastic moduli
-	DOUBLE PRECISION IPYCALPHA, SICALPHA, OPYCALPHA, 
+      DOUBLE PRECISION IPYCALPHA, SICALPHA, OPYCALPHA,
      &                 IPYCREEP, IPYCCNU, OPYCREEP, OPYCCNU,
      &                 IPYCE, IPYCNU, SICE, SICNU, OPYCE, OPYCNU
 C     Swelling variables of pyrocarbon layers
       DOUBLE PRECISION SRDOT_IPYC, STDOT_IPYC, SRDOT_OPYC, STDOT_OPYC,
      &                 ISWR, ISWT, OSWR, OSWT
 C  5. Fracture strengths and toughness of layers
-	DOUBLE PRECISION IPYCF, IPYCM, SIGFIPYCI, SIGFIPYC, 
+      DOUBLE PRECISION IPYCF, IPYCM, SIGFIPYCI, SIGFIPYC,
      &                 SICF, SICM, SIGFSICI, SIGFSIC,
      &                 OPYCF, OPYCM, SIGFOPYCI, SIGFOPYC, 
-     &				 SIGFCIPYC, SIGFCSIC, SIGFCOPYC,
+     &                 SIGFCIPYC, SIGFCSIC, SIGFCOPYC,
      &                 SICKIC0, SICKVAR, KICSICI, KICSIC, 
-     &				 KIIPYC, KIOPYC, KI1, KI2, CL
+     &                 KIIPYC, KIOPYC, KI1, KI2, CL
 C  6. Fuel specifications
       DOUBLE PRECISION CURAT, OURAT, U235ENR, U235VAR, U235E, AWU, WFU,
      &                 PAMB, T_PARTICLE
 C  7. Stresses
-	DOUBLE PRECISION SIGTIPYC, SIGTSIC, SIGTOPYC, SIGXIPYC, SIGXSIC,
+      DOUBLE PRECISION SIGTIPYC, SIGTSIC, SIGTOPYC, SIGXIPYC, SIGXSIC,
      &                 SIGXOPYC, SIGMIPYC,SIGMSIC,  SIGMOPYC, SIGLIPYC,
-     &				 SIGLOPYC, SIGLSIC, SIGR, SIGT, SIGR0, SIGT0
+     &                 SIGLOPYC, SIGLSIC, SIGR, SIGT, SIGR0, SIGT0
 C  8. Strains & Displacement
-	DOUBLE PRECISION EPIR, EPIT, EPIR0, EPIT0, UR, UR0
-     &				 E_IPYCREEP, E_OPYCREEP, E_IPYCREEP0, E_OPYCREEP0
+      DOUBLE PRECISION EPIR, EPIT, EPIR0, EPIT0, UR, UR0
+     &                 E_IPYCREEP, E_OPYCREEP, E_IPYCREEP0, E_OPYCREEP0
 C  9. Quantities of cracked PyC layers
-	DOUBLE PRECISION EPIRCP, EPITCP, URCP, SHEARIPYC, SHEAROPYC
+      DOUBLE PRECISION EPIRCP, EPITCP, URCP, SHEARIPYC, SHEAROPYC
 C  10. Statistical variables
       DOUBLE PRECISION PROBIF, PROBSF, PROBOF, PROBPF,
      &                 CONFIDIF, CONFIDSF, CONFIDOF, CONFIDPF,
      &                 SIGXBARI, SIGXBARS, SIGXBARO,
      &                 SIGXVARI, SIGXVARS, SIGXVARO,
-     &				 SIGMBARI, SIGMBARS, SIGMBARO,
+     &                 SIGMBARI, SIGMBARS, SIGMBARO,
      &                 SIGMVARI, SIGMVARS, SIGMVARO,
-     &				 SIGLBARI, SIGLBARS, SIGLBARO,
+     &                 SIGLBARI, SIGLBARS, SIGLBARO,
      &                 SIGLVARI, SIGLVARS, SIGLVARO
 C  11. Intimediate variables, seeds and counters
       DOUBLE PRECISION MOLES, MOLESU, VOIDVOL, PRESS, BURNUP,
      &                 BPRATE, FFLUX, FLUENCE, FLUENCE_R, D_FLUENCE, 
      &                 DF, RADIUS, DUMMY, RNCASES, RRNCASES, MACHTIME,
-     &				 OPERTIME, TEMPERORY
+     &                 OPERTIME, TEMPERORY
 C  12. Array for polynomial fitting by IMSL
       DOUBLE PRECISION SSPOLY, STAT(10)
 C  13. Fission Product Attack Variables
@@ -647,34 +647,34 @@ C  14. Amoeba Effect Variables
 C  Other variables
       DOUBLE PRECISION NA        !Avogadro Number
       DOUBLE PRECISION TIME, TIME0, ELAPTIME
-	DOUBLE PRECISION TIMELIMIT, SIG_UPPER, SIG_LOWER
-	DOUBLE PRECISION PARASET(1:2, 1:4), SIGXIPYCX, SIGXIPYCM,
-     &				 SIGMSICX, SIGMSICM
-	INTEGER*4 NPEBBLE, NPARTICLE
+      DOUBLE PRECISION TIMELIMIT, SIG_UPPER, SIG_LOWER
+      DOUBLE PRECISION PARASET(1:2, 1:4), SIGXIPYCX, SIGXIPYCM,
+     &	                SIGMSICX, SIGMSICM
+      INTEGER*4 NPEBBLE, NPARTICLE
       INTEGER*4 PARFAIL, IPYCFAIL, SICFAIL, OPYCFAIL, NCHAR, FMODE,
-     &		  PARFAIL0, IPYCFAIL0, SICFAIL0, OPYCFAIL0, FAILTYPE,
+     &          PARFAIL0, IPYCFAIL0, SICFAIL0, OPYCFAIL0, FAILTYPE,
      &          NBURP, NCASES, NDUMPED, LENGTH_OF_FILE, I, J, K, N
-	INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
-	INTEGER   IKISIC, CORR
-	INTEGER MSWITCH
+      INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
+      INTEGER   IKISIC, CORR
+      INTEGER   MSWITCH
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
-	INTEGER   NCHANNEL, NAXIAL, NLAYER
-	INTEGER   ISEED
-	INTEGER   NDIVI, NDIVS, NDIVO
+      INTEGER   NCHANNEL, NAXIAL, NLAYER
+      INTEGER   ISEED
+      INTEGER   NDIVI, NDIVS, NDIVO
       INTEGER   PSWITCH, COREMODEL
-	INTEGER   IPYCFAILED, SICFAILED, OPYCFAILED, PARFAILED
+      INTEGER   IPYCFAILED, SICFAILED, OPYCFAILED, PARFAILED
       INTEGER   TIMESTEP, TIMESTEP_A, NBLOCK, NSTEPINCYCLE
       INTEGER   SHUFFLE, WHICH_CHN, WHICH_BLK, WHICH_BTH
-	INTEGER   INDEX, INDEX2, ERROR_CODE
-	CHARACTER*3  FUELTYPE
-	CHARACTER*3  PSTATE
-	CHARACTER*4  MCODE
-	CHARACTER*42 FAILUREPATH
+      INTEGER   INDEX, INDEX2, ERROR_CODE
+      CHARACTER*3  FUELTYPE
+      CHARACTER*3  PSTATE
+      CHARACTER*4  MCODE
+      CHARACTER*42 FAILUREPATH
       CHARACTER*12 VERSION
       CHARACTER*11 STATUS
       CHARACTER*8  CTIME,CDATE
       CHARACTER*70 TITLE
-	CHARACTER*256 INPFILE1
+      CHARACTER*256 INPFILE1
       CHARACTER*256  INPFILE2, INPFILE3, INPFILE4
       CHARACTER*256  OSPEC
       CHARACTER*8  RUNIRR
@@ -684,14 +684,14 @@ C  Number of radial and axial divisions for power distribution, and number of to
       CHARACTER*1  TAB     
       CHARACTER*1  FF
       LOGICAL NOMINAL       ! Overrides statistical sampling
-	LOGICAL DIFFUSION
-	LOGICAL HISTOGRAM
-	LOGICAL PARAMETRIC_STUDY, PERTURBATION_ANALYSIS, SURFACE_ANALYSIS
+      LOGICAL DIFFUSION
+      LOGICAL HISTOGRAM
+      LOGICAL PARAMETRIC_STUDY, PERTURBATION_ANALYSIS, SURFACE_ANALYSIS
       LOGICAL FAIL   ! Flags particle failure
       LOGICAL FOPEN1, FOPEN2, FOPEN3, FOPEN4  ! Flags whether input file is open
       LOGICAL USERSEED      ! Flags user input of random number seed
-	LOGICAL DEBUG, EX
-	DOUBLE PRECISION RN
+      LOGICAL DEBUG, EX
+      DOUBLE PRECISION RN
 C
       PARAMETER (  NA = 6.02D23,
      &             R = 8.3144 D0,
@@ -728,7 +728,7 @@ C     &             BUFFT = 2.25 D0,
      &			 IPRMS = 27,
      &			 IOUTFL = 28)
 C  Number of divisions for stress distribution         |Modification|
-	PARAMETER ( NDIV = 30)    !Must be larger than 9
+      PARAMETER ( NDIV = 30)    !Must be larger than 9
 C  Boundaries for fuel failure histograms
       PARAMETER ( NHIS = 200,
      &            TIMELIMIT = 8.640D7, !1000 days
@@ -741,57 +741,57 @@ C
 C  Arrays to DIMENSION
       DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: POWDISTR
       DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: IRRHISTRY
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HCARDB
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HSIGRB, HSIGTB
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: CHANNELS
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: BLOCKS
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: PATH
+      DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HCARDB
+	     DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HSIGRB, HSIGTB
+	     DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: CHANNELS
+	     DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: BLOCKS
+	     DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: PATH
 C  History card for the particle -- a big array
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HCARD
+	     DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HCARD
 C  History stresses for the particle
-	DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HSIGR, HSIGT
-	INTEGER, DIMENSION (:,:), ALLOCATABLE :: BLOCKMAP
+      DOUBLE PRECISION, DIMENSION (:,:), ALLOCATABLE :: HSIGR, HSIGT
+      INTEGER, DIMENSION (:,:), ALLOCATABLE :: BLOCKMAP
       DIMENSION ISWR(0:NDEG), ISWT(0:NDEG), OSWR(0:NDEG), OSWT(0:NDEG) 
-	DIMENSION T_PARTICLE(0:5)
-	DIMENSION SIGR(1:NDIV), SIGT(1:NDIV), SIGR0(1:NDIV), SIGT0(1:NDIV)
-	DIMENSION EPIR(1:NDIV), EPIT(1:NDIV), EPIR0(1:NDIV), EPIT0(1:NDIV)
-	DIMENSION UR(1:NDIV), UR0(1:NDIV)
-	DIMENSION EPIRCP(1:NDIV), EPITCP(1:NDIV), URCP(1:NDIV)
-	DIMENSION E_IPYCREEP(1:2), E_OPYCREEP(1:2)
-	DIMENSION E_IPYCREEP0(1:2), E_OPYCREEP0(1:2)
-	DIMENSION HISTGRMP(0:NHIS,4), HISTGRMI(0:NHIS,4), 
+      DIMENSION T_PARTICLE(0:5)
+      DIMENSION SIGR(1:NDIV), SIGT(1:NDIV), SIGR0(1:NDIV), SIGT0(1:NDIV)
+      DIMENSION EPIR(1:NDIV), EPIT(1:NDIV), EPIR0(1:NDIV), EPIT0(1:NDIV)
+      DIMENSION UR(1:NDIV), UR0(1:NDIV)
+      DIMENSION EPIRCP(1:NDIV), EPITCP(1:NDIV), URCP(1:NDIV)
+      DIMENSION E_IPYCREEP(1:2), E_OPYCREEP(1:2)
+      DIMENSION E_IPYCREEP0(1:2), E_OPYCREEP0(1:2)
+      DIMENSION HISTGRMP(0:NHIS,4), HISTGRMI(0:NHIS,4),
      &          HISTGRMO(0:NHIS,4), HISTGRMS(0:NHIS,4)
       DIMENSION SSPOLY(NDEG+1)
       DIMENSION FAILTYPE(0:2)
 C
 C  Define interfaces of external procedures
-	INTERFACE
+	     INTERFACE
         SUBROUTINE CORE(COREMODEL, CHANNELS, BLOCKS, BLOCKMAP)
           DOUBLE PRECISION CHANNELS, BLOCKS
-	    INTEGER COREMODEL, BLOCKMAP
-	    DIMENSION CHANNELS(1:,-1:), BLOCKS(1:,1:)
+	         INTEGER COREMODEL, BLOCKMAP
+	         DIMENSION CHANNELS(1:,-1:), BLOCKS(1:,1:)
           DIMENSION BLOCKMAP(1:,1:)
-	  END SUBROUTINE
-	END INTERFACE
+	       END SUBROUTINE
+	     END INTERFACE
 C
-	INTERFACE
-	  SUBROUTINE FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE, 
-     &						WHICH_CHN, PATH)
+	     INTERFACE
+        SUBROUTINE FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE,
+     &						                  WHICH_CHN, PATH)
           DOUBLE PRECISION CHANNELS, ENTRANCE, PATH
           INTEGER   COREMODEL, WHICH_CHN
-	    DIMENSION CHANNELS(1:,-1:), PATH(1:,1:)
-	  END SUBROUTINE
-	END INTERFACE
+          DIMENSION CHANNELS(1:,-1:), PATH(1:,1:)
+        END SUBROUTINE
+	     END INTERFACE
 C
-	INTERFACE
-	  SUBROUTINE STRENGTH_PYC(LAYER, FLAG, D, BAF0, FLU, T, SIGT,
-     &					      SIGMA0, SIGF, M)
-		DOUBLE PRECISION D, BAF0, FLU, T, SIGT, SIGMA0, SIGF, M
-		CHARACTER*4 LAYER
-		CHARACTER*3 FLAG		
-		DIMENSION SIGT(1:)
-	  END SUBROUTINE
-	END INTERFACE
+	     INTERFACE
+	       SUBROUTINE STRENGTH_PYC(LAYER, FLAG, D, BAF0, FLU, T, SIGT,
+     &					                     SIGMA0, SIGF, M)
+          DOUBLE PRECISION D, BAF0, FLU, T, SIGT, SIGMA0, SIGF, M
+          CHARACTER*4 LAYER
+          CHARACTER*3 FLAG
+          DIMENSION SIGT(1:)
+	       END SUBROUTINE
+      	END INTERFACE
 C
 	INTERFACE
 	  SUBROUTINE STRENGTH_SIC(FLAG, FLU, T, SIGT, SIGMA0, SIGF, M)
@@ -1039,7 +1039,8 @@ C
      B     50, 1, 1, IERR)
         ISEED = 305
 	END IF
-	CALL RANDOM_SEED (PUT = (/ISEED/))
+	!CALL RANDOM_SEED (PUT = (/ISEED/))
+	CALL RANDOM_SEED (ISEED)
 	CALL RANDOM_NUMBER(RN)
 	Z = RN    !Initialize random number generator
 C
@@ -1177,7 +1178,7 @@ C    Clear arrays for histograms
 C  Open an output file to record information about failed particles
 C  if Monte Carlo sampling is performed.
 	  IF(.NOT.NOMINAL) THEN
-	    OPEN(FILE='failures'//'.dat',STATUS = "NEW",UNIT=IOUTFL)
+	    OPEN(FILE='failures'//'.dat',STATUS = "REPLACE",UNIT=IOUTFL)
 	    IF(PSWITCH.EQ.1) THEN
 	      WRITE(IOUTFL, 643)
 	    ELSE
@@ -1679,15 +1680,15 @@ C
 C
 C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
       IF (MSWITCH .EQ. 2)  THEN
-          DCORR = (255.2*DT/3600)*exp(-159.9/(0.008314*
-     &              (T_PARTICLE(3)+273.15)))	       
-	  R3=R3+DCORR
-	  R2=R2+DCORR
-	  WRITE(CORR,*) N, OPERTIME, R3
+        DCORR = (255.2*DT/3600) *
+     &            exp(-159.9/(0.008314 * (T_PARTICLE(3)+273.15)))
+        R3 = R3 + DCORR
+	       R2 = R2 + DCORR
+	       WRITE(CORR,*) N, OPERTIME, R3
       ELSE
           WRITE(*,*) MSWITCH
-          WRITE(*,*) PSWITCH
-          WRITE(*,*) MSWITCH
+          !WRITE(*,*) PSWITCH
+          !WRITE(*,*) MSWITCH
           STOP          
 C          DCORR = 0.D0
 C          R3=R3+DCORR
@@ -3652,15 +3653,15 @@ C
 C
       CLOSE(UNIT = IDAT1, STATUS = 'KEEP')  ! Normal end of program here
      	FOPEN1 = .FALSE.
-      IF(FOPEN2.EQ..TRUE.) THEN
+      IF(FOPEN2.EQV..TRUE.) THEN
         CLOSE(UNIT = IDAT2, STATUS = 'KEEP')
         FOPEN2 = .FALSE.
       ENDIF
-      IF(FOPEN3.EQ..TRUE.) THEN
+      IF(FOPEN3.EQV..TRUE.) THEN
         CLOSE(UNIT = IDAT3, STATUS = 'KEEP')
         FOPEN3 = .FALSE.
       ENDIF
-      IF(FOPEN4.EQ..TRUE.) THEN
+      IF(FOPEN4.EQV..TRUE.) THEN
         CLOSE(UNIT = IDAT4, STATUS = 'KEEP')
         FOPEN4 = .FALSE.
       ENDIF
@@ -3732,15 +3733,15 @@ C 213  FORMAT(A3, A1, A5, A1, A6, A1, A5, A1, A6)
 617   FORMAT(A8, A14,/)
 618   FORMAT(74('_'),/)
 619   FORMAT(I3,4X,F7.2,4X,F10.4,4X,F10.4)
-621   FORMAT(2X,F8.3,\)
-622   FORMAT(A25,\)
+621   FORMAT(2X,F8.3)
+622   FORMAT(A25)
 623   FORMAT(11X,F5.3,6(4X,E12.5),5(5X,F9.2))
 624   FORMAT(32X,4(2X,E14.7))
-625   FORMAT(A27,\)
+625   FORMAT(A27)
 626   FORMAT(3X,F9.3,11X,F9.3,9X,E12.5,5X,F9.4,8X,F9.3)
 627   FORMAT(7(3X,F8.3))
 628   FORMAT(5(4X,E12.5))
-629   FORMAT(2X,F9.3,\)
+629   FORMAT(2X,F9.3)
 630   FORMAT(A39,I11)
 631   FORMAT(A39,E11.4)
 632   FORMAT('  I',' | ',9('*'),' Particle ',9('*'),' |',
@@ -3749,51 +3750,51 @@ C 213  FORMAT(A3, A1, A5, A1, A6, A1, A5, A1, A6)
      &           ' | ',7('*'),' OPyC Layer ',8('*'),' |',/,
      &       8X,'Time',3X,'Stress',4X,'Flu',4X,'Burp',
      &       3(4X,'Time',3X,'Stress',4X,'Flu',4X,'Burp'))
-633   FORMAT(I3,\)
-634   FORMAT(4(I8),\)
-635	FORMAT('  Fluence (10^21nvt) IPyC Sigma0    IPyC strength',\,
-     &	   '     SiC Sigma0     SiC strength    OPyC Sigma0',\,
-     &	   '    OPyC strength      SiC KIC        IPyC KI',\,
+633   FORMAT(I3)
+634   FORMAT(4(I8))
+635	FORMAT('  Fluence (10^21nvt) IPyC Sigma0    IPyC strength',
+     &	   '     SiC Sigma0     SiC strength    OPyC Sigma0',
+     &	   '    OPyC strength      SiC KIC        IPyC KI',
      &	   '      OPyC KI    SiC KI from IPyC  SiC KI from OPyC')
-636	FORMAT(12(4X,F8.2),\)
-637   FORMAT('Operation Time (d)   Fluence (10E21nvt)   ',\,
-     &	   'QPPP (W/m^3)    Burnup (FIMA)    Coolant T (C)',/)
+636	FORMAT(12(4X,F8.2))
+637   FORMAT('Operation Time (d)   Fluence (10E21nvt)   ',
+     &	   'QPPP (W/m^3)    Burnup (FIMA)    Coolant T (C)')
 638   FORMAT(A41,2X,E11.4,1X,A3,1X,E11.4)
-639	FORMAT('                Max IPyC    Max SiC     ',\,
+639	FORMAT('                Max IPyC    Max SiC     ',
      &				  'Max OPyC    Min IPyC    Min SiC     Min OPyC'
-     &	  ,\,'    EOL IPyC    EOL SiC     EOL OPyC',\
-     &	  ,'   IPyC Strgth  SiC Strgth  OPyC Strgth',/)
-640	FORMAT(A11,\)
-641   FORMAT(2X,E10.3,\)
-642   FORMAT(2X,F10.3,\)
-643	FORMAT('Case No.  Failure Type    R1    R2    R3    R4    R5',\,
-     &	   '    BuffD   IPyCD   OPyCD   IPyCBAF0   OPyCBAF0   ',\,
-     &	   'IPyC SigF   OPyC SigF   SiC SigF   SiC KIc   ',\,
-     &	   'IPyC Stress   OPyC Stress   SiC Stress   Irr. Time   ',\,
-     &	   'Fluence     Burnup   IPyC T   Inner P   Channel   ',\,
+     &	  ,'    EOL IPyC    EOL SiC     EOL OPyC'
+     &	  ,'   IPyC Strgth  SiC Strgth  OPyC Strgth')
+640	FORMAT(A11)
+641   FORMAT(2X,E10.3)
+642   FORMAT(2X,F10.3)
+643	FORMAT('Case No.  Failure Type    R1    R2    R3    R4    R5',
+     &	   '    BuffD   IPyCD   OPyCD   IPyCBAF0   OPyCBAF0   ',
+     &	   'IPyC SigF   OPyC SigF   SiC SigF   SiC KIc   ',
+     &	   'IPyC Stress   OPyC Stress   SiC Stress   Irr. Time   ',
+     &	   'Fluence     Burnup   IPyC T   Inner P   Channel   ',
      &	   'Block   Cycle     FailurePath',//
-     &	   '                         (um)  (um)  (um)  (um)  (um)',\,
-     &	   '   (g/cc)  (g/cc)  (g/cc)                        ',\,
-     &	   '  (MPa)       (MPa)       (MPa)  (MPa.um^1/2)',\,
-     &	   '   (MPa)         (MPa)        (MPa)       (days)     ',\,
-     &	   '(10^21nvt)  (FIMA)     (C)     (MPa)              ',\,
-     &	   '                ',/)
-644	FORMAT('Case No.  Failure Type    R1    R2    R3    R4    R5',\,
-     &	   '    BuffD   IPyCD   OPyCD   IPyCBAF0   OPyCBAF0   ',\,
-     &	   'IPyC SigF   OPyC SigF   SiC SigF   SiC KIc   ',\,
-     &	   'IPyC Stress   OPyC Stress   SiC Stress   Irr. Time   ',\,
+     &	   '                         (um)  (um)  (um)  (um)  (um)',
+     &	   '   (g/cc)  (g/cc)  (g/cc)                        ',
+     &	   '  (MPa)       (MPa)       (MPa)  (MPa.um^1/2)',
+     &	   '   (MPa)         (MPa)        (MPa)       (days)     ',
+     &	   '(10^21nvt)  (FIMA)     (C)     (MPa)              ',
+     &	   '                ')
+644	FORMAT('Case No.  Failure Type    R1    R2    R3    R4    R5',
+     &	   '    BuffD   IPyCD   OPyCD   IPyCBAF0   OPyCBAF0   ',
+     &	   'IPyC SigF   OPyC SigF   SiC SigF   SiC KIc   ',
+     &	   'IPyC Stress   OPyC Stress   SiC Stress   Irr. Time   ',
      &	   'Fluence     Burnup   IPyC T   Inner P     FailurePath',//
-     &	   '                         (um)  (um)  (um)  (um)  (um)',\,
-     &	   '   (g/cc)  (g/cc)  (g/cc)                        ',\,
-     &	   '  (MPa)       (MPa)       (MPa)  (MPa.um^1/2)',\,
-     &	   '   (MPa)         (MPa)        (MPa)       (days)     ',\,
-     &	   '(10^21nvt)  (FIMA)     (C)     (MPa)    ',/)
-645   FORMAT(I7,7X,I2,8X,5(F5.1,1X),2X,3(F5.3,3X),2(1X,F6.4,4X),\,
-     &	   2(2X,F6.1,4X),1X,F6.1,5X,F6.1,3X,2(3X,F6.1,5X),2X,F6.1,\,
-     &	   7X,F6.1,4X,1X,F5.3,6X,F6.4,3X,F6.1,3X,F6.2,7X,I1,8X,\,
+     &	   '                         (um)  (um)  (um)  (um)  (um)',
+     &	   '   (g/cc)  (g/cc)  (g/cc)                        ',
+     &	   '  (MPa)       (MPa)       (MPa)  (MPa.um^1/2)',
+     &	   '   (MPa)         (MPa)        (MPa)       (days)     ',
+     &	   '(10^21nvt)  (FIMA)     (C)     (MPa)    ')
+645   FORMAT(I7,7X,I2,8X,5(F5.1,1X),2X,3(F5.3,3X),2(1X,F6.4,4X),
+     &	   2(2X,F6.1,4X),1X,F6.1,5X,F6.1,3X,2(3X,F6.1,5X),2X,F6.1,
+     &	   7X,F6.1,4X,1X,F5.3,6X,F6.4,3X,F6.1,3X,F6.2,7X,I1,8X,
      &	   I2,6X,I2,2X,A42/)
-646   FORMAT(I7,7X,I2,8X,5(F5.1,1X),2X,3(F5.3,3X),2(1X,F6.4,4X),\,
-     &	   2(2X,F6.1,4X),1X,F6.1,5X,F6.1,3X,2(3X,F6.1,5X),2X,F6.1,\,
+646   FORMAT(I7,7X,I2,8X,5(F5.1,1X),2X,3(F5.3,3X),2(1X,F6.4,4X),
+     &	   2(2X,F6.1,4X),1X,F6.1,5X,F6.1,3X,2(3X,F6.1,5X),2X,F6.1,
      &	   7X,F6.1,4X,1X,F5.3,6X,F6.4,3X,F6.1,3X,F6.2,2X,A42/)
       END
 C                                                                      *
@@ -5432,7 +5433,7 @@ C  Helium thermal properties
 	DOUBLE PRECISION HE_THERMAL, CP_HE, D_HE, MU_HE, K_HE, VC_HE,
      &                 RE_HE, PR_HE, H_HE
 C  Others
-	DOUBLE PRECISION T, R
+	DOUBLE PRECISION T, R, TPARTICLE, TPEBBLE
 	INTEGER*4 NPEBBLE, NPARTICLE
       INTEGER   ERROR_CODE, INDEX, I
       CHARACTER*3  FUELTYPE

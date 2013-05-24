@@ -1,5 +1,7 @@
-TIMCOAT.obj:Dialogs.obj
-TIMCOAT.obj:materprop.obj
-TIMCOAT.obj:mechanical_analysis.obj
-TIMCOAT.obj:mechanical_FUEL.obj
-TIMCOAT.obj:thermal_stress.obj
+TIMCOAT.o:Dialogs.o
+TIMCOAT.o:materprop.o
+TIMCOAT.o:mechanical_analysis.o
+TIMCOAT.o:mechanical_FUEL.o
+TIMCOAT.o:thermal_stress.o
+mechanical_analysis.o:math_functions.o
+materprop.o:math_functions.o
