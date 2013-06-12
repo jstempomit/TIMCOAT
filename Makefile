@@ -10,7 +10,7 @@ include OBJECTS
 # User Options
 #===============================================================================
 
-COMPILER = gnu
+COMPILER = intel
 DEBUG    = no
 PROFILE  = no
 OPTIMIZE = yes
@@ -84,18 +84,18 @@ all: $(program)
 $(program): $(objects)
 	$(F90) $(objects) -o $@ $(LDFLAGS)
 clean:
-	@rm *.o $(program)
+	@del *.obj *.mod $(program)
 neat:
-	@rm *.o
+	@del *.obj *.mod
 
 #===============================================================================
 # Rules
 #===============================================================================
 
-.SUFFIXES: .for .o
-.PHONY: all clean neat distclean 
+.SUFFIXES: .for .obj
+.PHONY: all xml-fortran clean neat distclean 
 
-%.o: %.for
+%.obj: %.for
 	$(F90) $(F90FLAGS) -c $<
 
 #===============================================================================

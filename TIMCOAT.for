@@ -572,7 +572,7 @@ C                                                                       *
 C  Main program starts
 C
       PROGRAM TIMCOAT
-C     INCLUDE 'link_fnl_static.h'
+      INCLUDE 'link_fnl_static.h'
       !DEC$ OBJCOMMENT LIB:'libiomp5md.lib'
 
 C     USE IMSL_LIBRARIES ! Use IMSL math and statistics libraries
