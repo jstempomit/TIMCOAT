@@ -84,9 +84,9 @@ all: $(program)
 $(program): $(objects)
 	$(F90) $(objects) -o $@ $(LDFLAGS)
 clean:
-	@rm *.o $(program)
+	@rm -f *.o *.mod *.obj $(program)
 neat:
-	@rm *.o
+	@rm -f *.o *.o *.mod *.obj
 
 #===============================================================================
 # Rules
