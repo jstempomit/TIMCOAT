@@ -48,7 +48,7 @@ C                                                                      *
 C                            Date: May, 2005                           *	  
 C                                                                      *
 C  Changes:                                                            *
-C  1.  The model now includes fission product attack of the SiC        *	                                                    
+C  1.  The model now includes fission product attack of the SiC        *
 C  2.  The model now accounts for failure due to the amoeba effect     *
 C                                                                      *
 C***********************************************************************
@@ -284,6 +284,8 @@ C  MD          R*8      M  : Kernel migration distance
 C  MF_COOLANT  R*8      I  : Mass flow rate of coolant [kg/s]
 C  MOLES       R*8      V  : Moles of gas in particle [gm-mol]
 C  MOLESU      R*8      V  : Moles of uranium in kernel [gm-mol]
+C  MSWITCH     I*4      I  : Run TIMCOAT in mode with MSWTICH = 1 or MSWITCH = 2 Pd and 
+C                            fission product corrosion of SiC and kernel migration
 C  N           I*4      M  : Current case (particle) number  (1..NCASES)
 C  NAXIAL      I*4      I  : Number of axial divisions in the reactor core specified by VSOP model
 C  NBLOCK      I*4      V  : Number of blocks/layers in the channel
@@ -660,7 +662,7 @@ C  Other variables
      &          NBURP, NCASES, NDUMPED, LENGTH_OF_FILE, I, J, K, N
       INTEGER*4 HISTGRMP, HISTGRMI, HISTGRMO, HISTGRMS
       INTEGER   IKISIC, CORR
-      INTEGER   MSWITCH
+      INTEGER*4   MSWITCH, CSWITCH
 C  Number of radial and axial divisions for power distribution, and number of total layers/blocks
       INTEGER   NCHANNEL, NAXIAL, NLAYER
       INTEGER   ISEED
@@ -1054,9 +1056,12 @@ C  Mode 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoe
      &                ' product corrosion of SiC?  (no = 1, yes = 2)'
       READ(IKEY,*) MSWITCH
 C
-C  Select the type of simulation to run (pebble bed reactor core simulation,
-C  irradiation experiment simulation, or constant irradiation simulation) by setting PSWITCH
+C  Select the type of coolant to use:  He = 1, Flibe (Li2BeF4) = 2.
+      WRITE(ITERM,*) 'Select coolant type: Helium = 1, Flibe = 2'
+      READ(IKEY,*) CSWITCH
 C
+C  Select the type of simulation to run (pebble bed reactor core simulation,
+C  irradiation experiment simulation, or constant irradiation simulation) by setting PSWITCH.
 C  Choose reactor power history by setting PSWITCH equal to 1 or 2 or 3.
 C         1 - user provides power distribution
 C         2 - user provides power history
@@ -1581,7 +1586,7 @@ C  Clear history card of particles
 C  Inner loop -- shuffle the pebbles into the reactor core and generate the history card
         DO 500 I = 1, SHUFFLE
 C    Sample one channel into which the pebble goes and the path it flows
-         CALL FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE, WHICH_CHN,PATH)
+        CALL FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE, WHICH_CHN,PATH)
 	    NBLOCK = BLOCKMAP(1,WHICH_CHN) !Number of blocks in the selected channel
 	    IF ((.NOT.PARAMETRIC_STUDY) .AND. NOMINAL) THEN
  	      WRITE(ITEST, *) OPERTIME, WHICH_CHN, NBLOCK
@@ -1592,7 +1597,7 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    TIMESTEP = 0
 	    FLUENCE_R = 0.0D0
 	    T_COOLANT = T_COOLIN
-          CALL TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE)  !Reset T_PARTICLE at the entrance
+        CALL TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE,CSWITCH)  !Reset T_PARTICLE at the entrance
 C    Calculate the total power of this channel for the purpose of scaling He temp.
           P_CHANNEL = 0.0D0
           DO 230 J = 1, NBLOCK
@@ -1658,14 +1663,14 @@ C    Determine current burnup
      &                          (T_COOLOUT-T_COOLIN)/P_CHANNEL
 	      T_COOLANT = HCARD(TIMESTEP,8)
 C    Calculate temperature distribution in particles
-           CALL TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE)  !calculate T distribution
+        CALL TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE, CSWITCH)  !calculate T distribution
 	      HCARD(TIMESTEP,9)  = T_PARTICLE(0)
 	      HCARD(TIMESTEP,10)  = T_PARTICLE(1)
 	      HCARD(TIMESTEP,11) = T_PARTICLE(2)
 	      HCARD(TIMESTEP,12) = T_PARTICLE(3)
 	      HCARD(TIMESTEP,13) = T_PARTICLE(4)
 	      HCARD(TIMESTEP,14) = T_PARTICLE(5)
-	   CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
+	CALL GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESS)  !calculate internal pressure
 	      HCARD(TIMESTEP,15) = PRESS
 C	      
 C  Switch to run TIMCOAT as mode 1 or mode 2
@@ -5292,13 +5297,13 @@ C
 C
 C
 C***********************************************************************
-C  Subroutine TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE)         *
+C  Subroutine TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE, CSWITCH)*
 C                                                                      *
 C    This subroutine calculates the temperature distribution through   *
 C  the fuel particles.                                                 *
 C    Notes:                                                            *
-C  1.  Call TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE) for      *
-C    initialization.                                                   * 
+C  1.  Call TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE, CSWITCH) *
+C      for initialization                                              * 
 C  2.  Currently there is no gap considered in the model               *
 C                                                                      *
 C  Notation                                                            *
@@ -5321,6 +5326,7 @@ C  Variables in COMMON blocks                                          *
 C  /PBED/ : reactor core parameters                                    *
 C    CORE_HEIGHT(m) D: Height of reactor core                          *
 C    CORE_RADIUS(m) D: Radius of reactor core                          *
+C    CSWITCH           Helium = 1, Flibe (Li2BeF4) = 2                *
 C    P_CORE (MWth)  D: Thermal power of reactor                        *
 C    T_COOLIN (C)    D: Coolant entry temperature                      *
 C    T_COOLOUT (C)   D: Coolant exit temperature                       *
@@ -5412,7 +5418,7 @@ C    MU_HE (kg/m.s) D: Viscosity of Helium                             *
 C    VC_HE (m/s)    D: Characteristic velocity of Helium flow          *
 C    RE_HE          D: Reynold's number of He                          *
 C    PR_HE          D: Prandtl number of He                            *
-C    H_HE (W/m^2.K) D: Heat transfer coefficient of He                 *
+C    H_COOLANT (W/m^2.K) D: Heat transfer coefficient of coolant       *
 C                                                                      *
 C  Others                                                              *
 C    T (C)          D: temporary temperature                           *
@@ -5435,7 +5441,8 @@ C***********************************************************************
 C
 C***********************************************************************
 C                                                                      *
-      SUBROUTINE TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE)
+      SUBROUTINE TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE,
+     &                       CSWITCH)
 C
 	DOUBLE PRECISION QPPP, T_COOLANT, BURNUP, T_PARTICLE
 C  Core parameters
@@ -5458,10 +5465,14 @@ C  Particle thermal properties
      &                 T_PS
 C  Helium thermal properties
 	DOUBLE PRECISION HE_THERMAL, CP_HE, D_HE, MU_HE, K_HE, VC_HE,
-     &                 RE_HE, PR_HE, H_HE
+     &                 RE_HE, PR_HE
+C  Flibe (Li2BeF4) thermal properties
+      DOUBLE PRECISION FLIBE_THERMAL, CP_FLIBE, D_FLIBE, MU_FLIBE, 
+     &                K_FLIBE, VC_FLIBE, RE_FLIBE, PR_FLIBE, H_FLIBE
 C  Others
+        DOUBLE PRECISION H_COOLANT
 	DOUBLE PRECISION T, R, TPARTICLE, TPEBBLE
-	INTEGER*4 NPEBBLE, NPARTICLE
+	INTEGER*4 NPEBBLE, NPARTICLE, CSWITCH
       INTEGER   ERROR_CODE, INDEX, I
       CHARACTER*3  FUELTYPE
 C
@@ -5471,7 +5482,7 @@ C
       DIMENSION T_PARTICLE(0:5), T_PEBBLE(0:2)
 	DIMENSION UO2_THERMAL(1:16,0:1), UCO_THERMAL(1:14,0:1),
      &          PYC_THERMAL(1:6,0:1), SIC_THERMAL(1:4,0:1),
-     &          HE_THERMAL(1:7,0:3)
+     &          HE_THERMAL(1:7,0:3), FLIBE_THERMAL(1:7,0:3)
 C  Common blocks
       COMMON /PBED/ CORE_HEIGHT, CORE_RADIUS, P_CORE, T_COOLIN, 
      &              T_COOLOUT, MF_COOLANT, PACKING, NPEBBLE
@@ -5484,7 +5495,6 @@ C  Common blocks
 	COMMON /PAR_T/ K_FUEL, K_BUFFER, K_IPYC, K_SIC, K_OPYC
 	COMMON /ERRHANDLE/ ERROR_CODE
 C
-C	EXTERNAL RAND
       EXTERNAL TPARTICLE
 	EXTERNAL TPEBBLE
 C  Save pebble temperature profile for next step usage.
@@ -5505,6 +5515,8 @@ C  Helium thermal data are from A. F. Mills; temperatures are in C.
      &                 0.133, 0.149, 0.178, 0.205, 0.229, 0.273, 0.313,
      &                 0.195,0.1624,0.1218,0.0974,0.0812,0.0609,0.0487,
      &         17.9D-6,20.1D-6,24.4D-6,28.2D-6,31.7D-6,37.8D-6,43.3D-6/
+C  Flibe thermal data are from BLAH BLAH BLAH.
+C        DATA FLIBE_THERMAL /
 C  Dense PyC thermal conductivity data are from D. Dobranich; temperatures are in C.
 	DATA PYC_THERMAL /76.85,116.85,216.85,326.85,456.85,556.85,
      &                  9.2D0, 7.5D0, 6.7D0, 5.9D0, 5.4D0, 5.2D0/
@@ -5640,19 +5652,20 @@ C   Heat transfer coefficient of He is calculated using Achenbach Correlation.
       VC_HE = MF_COOLANT/(D_HE*A_CORE*(1.0D0-PACKING)) !Characteristic velocity of He
       RE_HE = D_HE*PEBDIAMETER*VC_HE/MU_HE        !Reynold's number of He
       PR_HE = MU_HE*CP_HE/K_HE                    !Prandtl number of He
-	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
+	H_COOLANT = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
      &       (((1.18D0*RE_HE**0.58D0)**4.0D0+
      &         (0.23D0*RE_HE**0.75D0)**4.0D0)**0.25D0)
+C   Need heat transfer coefficient for flibe in a packed bed.  Is Achenbach appropriate?
 C   Average K of pebble fuel zone
       K_PFZ = ((V_FUEL*K_FUEL+V_BUFFER*K_BUFFER+V_IPYC*K_IPYC+
      &         V_SIC*K_SIC+V_OPYC*K_OPYC)*NPARTICLE+V_PFM*K_PFM)/V_PFZ
 C   Update pebble temperature profile
-      T_PEBBLE(0) = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, 0.0D0)
-      T_PEBBLE(1) = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, PFZRADIUS)
-      T_PEBBLE(2) = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, PEBRADIUS)
+      T_PEBBLE(0) = TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, 0.0D0)
+      T_PEBBLE(1) = TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, PFZRADIUS)
+      T_PEBBLE(2) = TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, PEBRADIUS)
 C  Calculate the temperature profile of a particle randomly chosen in the pebble
       R = R_IN_PEBBLE
-	T_PS = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, R)
+	T_PS = TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, R)
       Q_FUEL = Q_PFZ*V_PFZ/(NPARTICLE*V_FUEL)
       T_PARTICLE(0) = TPARTICLE(T_PS, Q_FUEL, 0.0D0)
 	T_PARTICLE(1) = TPARTICLE(T_PS, Q_FUEL, R1)
@@ -6896,7 +6909,7 @@ C
 C
 C
 C***********************************************************************
-C  Function TPEBBLE(T_COOLANT, H_HE, Q_PFZ, R)                              *
+C  Function TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, R)                    *
 C                                                                      *
 C    Calcuate the temperature (C) at radius R in a pebble, given the   *
 C  He temperature, He heat transfer coefficient and power density in   *
@@ -6910,7 +6923,7 @@ C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
 C    T_COOLANT (C)       D: Current coolant temperature                *
-C    H_HE (W/m^2.K) D: Heat transfer coefficient of He                 *
+C    H_COOLANT (W/m^2.K) D: Heat transfer coefficient of coolant       *
 C    Q_PFZ (W/m^3)  D: Volumetric heat generation rate in the pebble   *
 C                      fuel zone                                       *
 C    R (m)          D: Radius                                          *
@@ -6929,9 +6942,9 @@ C***********************************************************************
 C
 C***********************************************************************
 C                                                                      *
-      FUNCTION TPEBBLE(T_COOLANT, H_HE, Q_PFZ, R)
+      FUNCTION TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, R)
 C
-      DOUBLE PRECISION TPEBBLE, T_COOLANT, H_HE, Q_PFZ, R
+      DOUBLE PRECISION TPEBBLE, T_COOLANT, H_COOLANT, Q_PFZ, R
 	DOUBLE PRECISION PEBRADIUS, PFZRADIUS, R_IN_PEBBLE,
      &                 K_PM, K_PFM, K_PFZ
 	INTEGER*4 NPARTICLE
@@ -6941,13 +6954,13 @@ C
 C
       IF ((R.GE.0.0D0).AND.(R.LT.PFZRADIUS)) THEN
 	  TPEBBLE = T_COOLANT + (Q_PFZ*PFZRADIUS**3.0/3.0D0)*
-     &                   (1.0D0/H_HE/PEBRADIUS**2.0 + 
+     &                   (1.0D0/H_COOLANT/PEBRADIUS**2.0 + 
      &                    (1.0D0/PFZRADIUS-1.0D0/PEBRADIUS)/K_PM + 
      &                    (1.0D0/PFZRADIUS-R**2.0/PFZRADIUS**3.0)/
      &                    (2.0D0*K_PFZ))
 	ELSE IF ((R.GE.PFZRADIUS).AND.(R.LE.PEBRADIUS)) THEN
 	  TPEBBLE = T_COOLANT + (Q_PFZ*PFZRADIUS**3.0/3.0D0)*
-     &                   (1.0D0/H_HE/PEBRADIUS**2.0 + 
+     &                   (1.0D0/H_COOLANT/PEBRADIUS**2.0 + 
      &                    (1.0D0/R-1.0D0/PEBRADIUS)/K_PM)
       ELSE
 	  TPEBBLE = T_COOLANT
