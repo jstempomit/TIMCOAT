@@ -1051,14 +1051,19 @@ C  Mode 2 adds Pd migration, corrosion (thinning) of the SiC layer, and the Amoe
       READ(IKEY,*) MSWITCH
 C
 C  Select the type of simulation to run (pebble bed reactor core simulation,
-C  irradiation experiment simulation, or constant irradiation simulation)
+C  irradiation experiment simulation, or constant irradiation simulation) by setting PSWITCH
 C
-C	Call PowerTypeDialog(PSWITCH)
-C
-      PSWITCH = 1          !Select reactor power history
-                               ! 1 - user provides power distribution
-                               ! 2 - user provides power history
-                               ! 3 - user doesn't provide power; assume uniform power density
+C  Choose reactor power history by setting PSWITCH equal to 1 or 2 or 3.
+C         1 - user provides power distribution
+C         2 - user provides power history
+C         3 - user doesn't provide power; assume uniform power density
+      WRITE(ITERM,*) 'Select reactor power history:',
+     &    ' 1 = User provides power distribution',
+     &    ' 2 = User provides power history',
+     &    ' 3 = Assume uniform power density, user does',
+     &          ' not provide power'
+      READ(IKEY,*) PSWITCH
+C          
       IF(PSWITCH .EQ. 1) THEN
 	  WRITE(ITERM,*) ' Is it from new or old core model?',
      &				 ' Please choose a number (new = 1, old = 2):'

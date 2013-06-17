@@ -477,8 +477,8 @@ C  STDOT_OPYC  R*8      V  : Tangential swelling rate of OPyC [/10^21nvt]
 C  STATUS      C*11     C  : Program FUEL status identifier
 C  SURFACE_ANALYSIS     L  : Flag for two parameter surface analysis
 C						   in parametric study
-C  T_GASIN     R*8      P  : Coolant (He) entry temperature [C]
-C  T_GASOUT    R*8      P  : Coolant (He) exit temperature  [C]
+C  T_COOLIN    R*8      P  : Coolant entry temperature [C]
+C  T_COOLOUT   R*8      P  : Coolant exit temperature  [C]
 C  T_IRR       R*8      I  : Irradiation temperature [C]
 C  TAB         C*1      M  : ASCII tab character
 C  T_PARTICLE  R*8      V  : Temperature distribution in the particles (C)
@@ -583,8 +583,8 @@ C  1. Reactor specifications
       DOUBLE PRECISION EOLBUP, EOLFLU, POWER, QPPP_AVG, QPPP, T_HE,
      &                 DT, OUTTIME, IRRTIME,
      &                 PEBBLE_R, PEBBLE_Z, P_CHANNEL, P_BLOCK, P_PAR
-      DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_GASIN,
-     &                 T_GASOUT, MF_HE, PACKING
+      DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_COOLIN,
+     &                 T_COOLOUT, MF_HE, PACKING
       DOUBLE PRECISION PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                 R_IN_PEBBLE
 C  2. Particle geometry
@@ -811,8 +811,8 @@ C
 	END INTERFACE
 C  Common blocks
       COMMON /MTYPE/ MACH, COMP   !Common block used by date and timing routines
-      COMMON /PBED/  CORE_HEIGHT, CORE_RADIUS, P_CORE, T_GASIN, 
-     &               T_GASOUT, MF_HE, PACKING, NPEBBLE
+      COMMON /PBED/  CORE_HEIGHT, CORE_RADIUS, P_CORE, T_COOLIN, 
+     &               T_COOLOUT, MF_HE, PACKING, NPEBBLE
       COMMON /PEBBLE/ PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                R_IN_PEBBLE, NPARTICLE
       COMMON /PAR_R0/ R10, R20, R30, R40, R50   !initial particle geometry
@@ -866,14 +866,14 @@ C
      &                  PAMB,			PEBRADIUS,		PFZRADIUS,
      &                  RUNIRR,		SHUFFLE,		SICF,    
      &                  SICKIC0,		SICKVAR,		SICM,
-     &				  SICTHK,		SICVAR,			T_GASIN,
-     &				  T_GASOUT,		T_IRR,			TITLE,
+     &				  SICTHK,		SICVAR,			T_COOLIN,
+     &				  T_COOLOUT,		T_IRR,			TITLE,
      &                  U235ENR,		U235VAR,		USERSEED,
      &                  FUELTYPE,		DIFFUSION,		HISTOGRAM
 C  Important reactor core parameters, output to DEBUG file
 C
 	NAMELIST /REACTOR/ CORE_HEIGHT, CORE_RADIUS,	P_CORE, 
-     &				   T_IRR,		T_GASIN,		T_GASOUT,
+     &				   T_IRR,		T_COOLIN,		T_COOLOUT,
      &                   MF_HE,		PACKING,		NPEBBLE,
      &				   EOLBUP,		EOLFLU,			QPPP_AVG,
      &				   DT,			OUTTIME,		OPERTIME,
@@ -1587,7 +1587,7 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    WHICH_BTH = I
 	    TIMESTEP = 0
 	    FLUENCE_R = 0.0D0
-	    T_HE = T_GASIN
+	    T_HE = T_COOLIN
           CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE)  !Reset T_PARTICLE at the entrance
 C    Calculate the total power of this channel for the purpose of scaling He temp.
           P_CHANNEL = 0.0D0
@@ -1651,7 +1651,7 @@ C    Determine current burnup
 	      HCARD(TIMESTEP,6) = QPPP
 	      HCARD(TIMESTEP,7) = BURNUP
             HCARD(TIMESTEP,8) = T_HE + HCARD(TIMESTEP,8)*
-     &                          (T_GASOUT-T_GASIN)/P_CHANNEL
+     &                          (T_COOLOUT-T_COOLIN)/P_CHANNEL
 	      T_HE = HCARD(TIMESTEP,8)
 C    Calculate temperature distribution in particles
            CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)  !calculate T distribution
@@ -5318,8 +5318,8 @@ C  /PBED/ : reactor core parameters                                    *
 C    CORE_HEIGHT(m) D: Height of reactor core                          *
 C    CORE_RADIUS(m) D: Radius of reactor core                          *
 C    P_CORE (MWth)  D: Thermal power of reactor                        *
-C    T_GASIN (C)    D: Coolant (He) entry temperature                  *
-C    T_GASOUT (C)   D: Coolant (He) exit temperature                   *
+C    T_COOLIN (C)    D: Coolant entry temperature                      *
+C    T_COOLOUT (C)   D: Coolant exit temperature                        *
 C    MF_HE (kg/s)   D: Mass flow rate of Helium                        *
 C    PACKING        D: Packing fraction of pebbles in the reactor core *
 C    NPEBBLE        I: Number of pebbles in the reactor core           *
@@ -5436,7 +5436,7 @@ C
 	DOUBLE PRECISION QPPP, T_HE, BURNUP, T_PARTICLE
 C  Core parameters
 	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, A_CORE, V_CORE,
-     &                 P_CORE, T_GASIN, T_GASOUT, MF_HE, PACKING
+     &                 P_CORE, T_COOLIN, T_COOLOUT, MF_HE, PACKING
 C  Pebble related variables
 	DOUBLE PRECISION PEBRADIUS, PEBDIAMETER, PFZRADIUS, V_PEBBLE,
      &                 V_PFZ, V_PFM, V_PM, Q_PFZ, K_PM, K_PFM, K_PFZ,
@@ -5469,8 +5469,8 @@ C
      &          PYC_THERMAL(1:6,0:1), SIC_THERMAL(1:4,0:1),
      &          HE_THERMAL(1:7,0:3)
 C  Common blocks
-      COMMON /PBED/ CORE_HEIGHT, CORE_RADIUS, P_CORE, T_GASIN, 
-     &              T_GASOUT, MF_HE, PACKING, NPEBBLE
+      COMMON /PBED/ CORE_HEIGHT, CORE_RADIUS, P_CORE, T_COOLIN, 
+     &              T_COOLOUT, MF_HE, PACKING, NPEBBLE
       COMMON /PEBBLE/ PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                R_IN_PEBBLE, NPARTICLE
       COMMON /PAR_K/ KDEN, BDEN, KERNT, BUFFT, U235E, CURAT, OURAT,
