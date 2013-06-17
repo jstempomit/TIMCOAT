@@ -108,6 +108,10 @@ C  COMP        C*3      C  : Compiler type
 C  CORE_HEIGHT R*8      I  : Height of reactor core [m]
 C  CORE_RADIUS R*8      I  : Radius of reactor core [m]
 C  COREMODEL   I*4      V  : Indicating whether new or old VSOP core model is employed
+C  CSWITCH     I*4      M  : Selects coolant type.  He = 1, Flibe (Li2BeF4) = 2
+C                            CSWITCH calls upon material databases specific to the desired 
+C                            coolant.  Option to add additional coolant types by defining 
+C                            additional CSWITCH integers.  
 C  CTIME       C*8      M  : Time format HH/MM/SS
 C  CURAT       R*8      I  : Carbon to Uranium atom ratio
 C  CV          R*8      P  : Numerical constant (4/3) Pi X 10^-12
@@ -173,7 +177,7 @@ C                            C4: FLUENCE/1.0D21 (10^21nvt)
 C                            C5: FLUENCE_R/1.0D21 (10^21nvt)
 C                            C6: QPPP	    (W/m3)
 C                            C7: BURNUP   (fima)
-C                            C8: T_HE     (C)
+C                            C8: T_COOLANT     (C)
 C                            C9-C14: T_PARTICLE(0:5) (C)
 C                            C15: PRESS   (MPa)
 C                            C16: SRDOT_IPYC (dimensionless)
@@ -277,7 +281,7 @@ C							'IS2' : IPyC/SiC two-layer analysis
 C							'SO2' : SiC/OPyC two-layer analysis
 C							'S1'  : SiC single-layer analysis
 C  MD          R*8      M  : Kernel migration distance 
-C  MF_HE       R*8      I  : Mass flow rate of Helium [kg/s]
+C  MF_COOLANT  R*8      I  : Mass flow rate of coolant [kg/s]
 C  MOLES       R*8      V  : Moles of gas in particle [gm-mol]
 C  MOLESU      R*8      V  : Moles of uranium in kernel [gm-mol]
 C  N           I*4      M  : Current case (particle) number  (1..NCASES)
@@ -486,7 +490,7 @@ C                            T_PARTICLE(0) is the value at the center of fuel
 C                            T_PARTICLE(1-5) correspond to the values at R1-R5, respectively.
 C  TEMPERORY   R*8      M  : Variable for temperory usage
 C  TGRAD       R*8      M  : Temperature gradient in paticle (K/m)
-C  T_HE        R*8      V  : Bulk Helium temperature [C]
+C  T_COOLANT   R*8      V  : Bulk coolant temperature [C]
 C  TIME        R*4      S  : Elapsed wall clock time [sec]
 C  TIME0       R*4      S  : Starting wall clock time [sec]
 C  TIMELIMIT   R*8      P  : Upper time limit for histogram
@@ -572,7 +576,7 @@ C                                                                       *
 C  Main program starts
 C
       PROGRAM TIMCOAT
-C     INCLUDE 'link_fnl_static.h'
+C     INCLUDE 'link_fnl_static.h'         *Use this if running in Windows
       !DEC$ OBJCOMMENT LIB:'libiomp5md.lib'
 
 C     USE IMSL_LIBRARIES ! Use IMSL math and statistics libraries
@@ -580,11 +584,11 @@ C
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
 C  1. Reactor specifications
-      DOUBLE PRECISION EOLBUP, EOLFLU, POWER, QPPP_AVG, QPPP, T_HE,
+      DOUBLE PRECISION EOLBUP, EOLFLU, POWER, QPPP_AVG, QPPP, T_COOLANT,
      &                 DT, OUTTIME, IRRTIME,
      &                 PEBBLE_R, PEBBLE_Z, P_CHANNEL, P_BLOCK, P_PAR
       DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, P_CORE, T_IRR, T_COOLIN,
-     &                 T_COOLOUT, MF_HE, PACKING
+     &                 T_COOLOUT, MF_COOLANT, PACKING
       DOUBLE PRECISION PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                 R_IN_PEBBLE
 C  2. Particle geometry
@@ -812,7 +816,7 @@ C
 C  Common blocks
       COMMON /MTYPE/ MACH, COMP   !Common block used by date and timing routines
       COMMON /PBED/  CORE_HEIGHT, CORE_RADIUS, P_CORE, T_COOLIN, 
-     &               T_COOLOUT, MF_HE, PACKING, NPEBBLE
+     &               T_COOLOUT, MF_COOLANT, PACKING, NPEBBLE
       COMMON /PEBBLE/ PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                R_IN_PEBBLE, NPARTICLE
       COMMON /PAR_R0/ R10, R20, R30, R40, R50   !initial particle geometry
@@ -856,7 +860,7 @@ C
      &                  IPYCM,		IPYCTHK,		IPYCVAR,
      &				  IRRTIME,		ISEED,			KERND,
      &                  KERNDIA,		KERNDVAR,		KERNT,
-     &                  KERNVAR,		MF_HE,			NBURP,
+     &                  KERNVAR,		MF_COOLANT,			NBURP,
      &                  NCASES,		NOMINAL,		NPEBBLE,
      &                  NPARTICLE,	QPPP_AVG,		OPYCBAF0I,
      &                  OPYCBAFVAR,	OPYCCRATE,		OPYCD,
@@ -874,7 +878,7 @@ C  Important reactor core parameters, output to DEBUG file
 C
 	NAMELIST /REACTOR/ CORE_HEIGHT, CORE_RADIUS,	P_CORE, 
      &				   T_IRR,		T_COOLIN,		T_COOLOUT,
-     &                   MF_HE,		PACKING,		NPEBBLE,
+     &                   MF_COOLANT,		PACKING,		NPEBBLE,
      &				   EOLBUP,		EOLFLU,			QPPP_AVG,
      &				   DT,			OUTTIME,		OPERTIME,
      &				   IRRTIME
@@ -1587,8 +1591,8 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    WHICH_BTH = I
 	    TIMESTEP = 0
 	    FLUENCE_R = 0.0D0
-	    T_HE = T_COOLIN
-          CALL TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE)  !Reset T_PARTICLE at the entrance
+	    T_COOLANT = T_COOLIN
+          CALL TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE)  !Reset T_PARTICLE at the entrance
 C    Calculate the total power of this channel for the purpose of scaling He temp.
           P_CHANNEL = 0.0D0
           DO 230 J = 1, NBLOCK
@@ -1650,11 +1654,11 @@ C    Determine current burnup
      &			 WHICH_BTH, 4)   !pick out power at that position
 	      HCARD(TIMESTEP,6) = QPPP
 	      HCARD(TIMESTEP,7) = BURNUP
-            HCARD(TIMESTEP,8) = T_HE + HCARD(TIMESTEP,8)*
+            HCARD(TIMESTEP,8) = T_COOLANT + HCARD(TIMESTEP,8)*
      &                          (T_COOLOUT-T_COOLIN)/P_CHANNEL
-	      T_HE = HCARD(TIMESTEP,8)
+	      T_COOLANT = HCARD(TIMESTEP,8)
 C    Calculate temperature distribution in particles
-           CALL TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)  !calculate T distribution
+           CALL TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE)  !calculate T distribution
 	      HCARD(TIMESTEP,9)  = T_PARTICLE(0)
 	      HCARD(TIMESTEP,10)  = T_PARTICLE(1)
 	      HCARD(TIMESTEP,11) = T_PARTICLE(2)
@@ -5288,12 +5292,12 @@ C
 C
 C
 C***********************************************************************
-C  Subroutine TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)              *
+C  Subroutine TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE)         *
 C                                                                      *
 C    This subroutine calculates the temperature distribution through   *
 C  the fuel particles.                                                 *
 C    Notes:                                                            *
-C  1.  Call TEMPERATURE(0.0D0, T_HE, BURNUP, T_PARTICLE) for           *
+C  1.  Call TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE) for      *
 C    initialization.                                                   * 
 C  2.  Currently there is no gap considered in the model               *
 C                                                                      *
@@ -5305,7 +5309,7 @@ C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
 C    QPPP (W/m^3)   D: Current power density                           *
-C    T_HE (C)       D: Current Helium temperature                      *
+C    T_COOLANT (C)       D: Current coolant temperature                *
 C    BURNUP (FIMA)  D: Current burnup of the pebble                    *
 C    T_PARTICLE(0:5) D: (returned arguments)                           *
 C                      Temperature distribution in the particles       *
@@ -5319,8 +5323,8 @@ C    CORE_HEIGHT(m) D: Height of reactor core                          *
 C    CORE_RADIUS(m) D: Radius of reactor core                          *
 C    P_CORE (MWth)  D: Thermal power of reactor                        *
 C    T_COOLIN (C)    D: Coolant entry temperature                      *
-C    T_COOLOUT (C)   D: Coolant exit temperature                        *
-C    MF_HE (kg/s)   D: Mass flow rate of Helium                        *
+C    T_COOLOUT (C)   D: Coolant exit temperature                       *
+C    MF_COOLANT (kg/s)   D: Mass flow rate of coolant                  *
 C    PACKING        D: Packing fraction of pebbles in the reactor core *
 C    NPEBBLE        I: Number of pebbles in the reactor core           *
 C  /PEBBLE/ : pebble parameters                                        *
@@ -5431,12 +5435,12 @@ C***********************************************************************
 C
 C***********************************************************************
 C                                                                      *
-      SUBROUTINE TEMPERATURE(QPPP, T_HE, BURNUP, T_PARTICLE)
+      SUBROUTINE TEMPERATURE(QPPP, T_COOLANT, BURNUP, T_PARTICLE)
 C
-	DOUBLE PRECISION QPPP, T_HE, BURNUP, T_PARTICLE
+	DOUBLE PRECISION QPPP, T_COOLANT, BURNUP, T_PARTICLE
 C  Core parameters
 	DOUBLE PRECISION CORE_HEIGHT, CORE_RADIUS, A_CORE, V_CORE,
-     &                 P_CORE, T_COOLIN, T_COOLOUT, MF_HE, PACKING
+     &                 P_CORE, T_COOLIN, T_COOLOUT, MF_COOLANT, PACKING
 C  Pebble related variables
 	DOUBLE PRECISION PEBRADIUS, PEBDIAMETER, PFZRADIUS, V_PEBBLE,
      &                 V_PFZ, V_PFM, V_PM, Q_PFZ, K_PM, K_PFM, K_PFZ,
@@ -5470,7 +5474,7 @@ C
      &          HE_THERMAL(1:7,0:3)
 C  Common blocks
       COMMON /PBED/ CORE_HEIGHT, CORE_RADIUS, P_CORE, T_COOLIN, 
-     &              T_COOLOUT, MF_HE, PACKING, NPEBBLE
+     &              T_COOLOUT, MF_COOLANT, PACKING, NPEBBLE
       COMMON /PEBBLE/ PEBRADIUS, PFZRADIUS, K_PM, K_PFM, K_PFZ,
      &                R_IN_PEBBLE, NPARTICLE
       COMMON /PAR_K/ KDEN, BDEN, KERNT, BUFFT, U235E, CURAT, OURAT,
@@ -5511,10 +5515,10 @@ C
 C  First time run: initialize arrays storing temperature profiles
       IF (QPPP .EQ. 0.0D0) THEN
 	  DO 3110 I = 0, 2
-	    T_PEBBLE(I) = T_HE
+	    T_PEBBLE(I) = T_COOLANT
 3110    CONTINUE
         DO 3120 I = 0, 5
-	    T_PARTICLE(I) = T_HE
+	    T_PARTICLE(I) = T_COOLANT
 3120    CONTINUE
         RETURN
 	END IF
@@ -5522,17 +5526,17 @@ C  Modeling begins here ...
 C
 C  Thermal properties for coolant He (from A. F. Mills)
       CP_HE = 5200.0D0                                                 ! J/kg.K
-      CALL LOCATE_ARRAY(HE_THERMAL(:,0), 7, 1, T_HE, INDEX)
+      CALL LOCATE_ARRAY(HE_THERMAL(:,0), 7, 1, T_COOLANT, INDEX)
 	IF (INDEX .EQ. 0) INDEX = INDEX + 1   !exceeds lowerbound; make adjustion.
       IF (INDEX .EQ. 7) INDEX = INDEX - 1   !exceeds upperbound; make adjustion.
-      K_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,1)         ! W/m.K
-     &        +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,1))
+      K_HE = ((T_COOLANT-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,1)         ! W/m.K
+     &        +(HE_THERMAL(INDEX+1,0)-T_COOLANT)*HE_THERMAL(INDEX,1))
      &       /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
-      D_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,2)         ! kg/m^3
-     &        +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,2))
+      D_HE = ((T_COOLANT-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,2)         ! kg/m^3
+     &        +(HE_THERMAL(INDEX+1,0)-T_COOLANT)*HE_THERMAL(INDEX,2))
      &       /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
-      MU_HE = ((T_HE-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,3)        ! kg/m.s
-     &         +(HE_THERMAL(INDEX+1,0)-T_HE)*HE_THERMAL(INDEX,3))
+      MU_HE = ((T_COOLANT-HE_THERMAL(INDEX,0))*HE_THERMAL(INDEX+1,3)        ! kg/m.s
+     &         +(HE_THERMAL(INDEX+1,0)-T_COOLANT)*HE_THERMAL(INDEX,3))
      &        /(HE_THERMAL(INDEX+1,0)-HE_THERMAL(INDEX,0))
 C
 C  TRISO fuel geometries, including calculation of fuel swelling
@@ -5633,7 +5637,7 @@ C   Thermal conductivity of matrix graphite is from Kania and Nickel; temperatur
 	K_PM = 47.4D0*(1.0D0-9.7556D-4*(T-100.0D0)*DEXP(-6.036D-4*T))
 C   Heat transfer coefficient of He is calculated using Achenbach Correlation.
       PEBDIAMETER = 2.0D0*PEBRADIUS
-      VC_HE = MF_HE/(D_HE*A_CORE*(1.0D0-PACKING)) !Characteristic velocity of He
+      VC_HE = MF_COOLANT/(D_HE*A_CORE*(1.0D0-PACKING)) !Characteristic velocity of He
       RE_HE = D_HE*PEBDIAMETER*VC_HE/MU_HE        !Reynold's number of He
       PR_HE = MU_HE*CP_HE/K_HE                    !Prandtl number of He
 	H_HE = (K_HE/PEBDIAMETER)*(PR_HE**(1.0D0/3.0D0))*               ! W/m^2.K
@@ -5643,12 +5647,12 @@ C   Average K of pebble fuel zone
       K_PFZ = ((V_FUEL*K_FUEL+V_BUFFER*K_BUFFER+V_IPYC*K_IPYC+
      &         V_SIC*K_SIC+V_OPYC*K_OPYC)*NPARTICLE+V_PFM*K_PFM)/V_PFZ
 C   Update pebble temperature profile
-      T_PEBBLE(0) = TPEBBLE(T_HE, H_HE, Q_PFZ, 0.0D0)
-      T_PEBBLE(1) = TPEBBLE(T_HE, H_HE, Q_PFZ, PFZRADIUS)
-      T_PEBBLE(2) = TPEBBLE(T_HE, H_HE, Q_PFZ, PEBRADIUS)
+      T_PEBBLE(0) = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, 0.0D0)
+      T_PEBBLE(1) = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, PFZRADIUS)
+      T_PEBBLE(2) = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, PEBRADIUS)
 C  Calculate the temperature profile of a particle randomly chosen in the pebble
       R = R_IN_PEBBLE
-	T_PS = TPEBBLE(T_HE, H_HE, Q_PFZ, R)
+	T_PS = TPEBBLE(T_COOLANT, H_HE, Q_PFZ, R)
       Q_FUEL = Q_PFZ*V_PFZ/(NPARTICLE*V_FUEL)
       T_PARTICLE(0) = TPARTICLE(T_PS, Q_FUEL, 0.0D0)
 	T_PARTICLE(1) = TPARTICLE(T_PS, Q_FUEL, R1)
@@ -6892,7 +6896,7 @@ C
 C
 C
 C***********************************************************************
-C  Function TPEBBLE(T_HE, H_HE, Q_PFZ, R)                              *
+C  Function TPEBBLE(T_COOLANT, H_HE, Q_PFZ, R)                              *
 C                                                                      *
 C    Calcuate the temperature (C) at radius R in a pebble, given the   *
 C  He temperature, He heat transfer coefficient and power density in   *
@@ -6905,7 +6909,7 @@ C    L               : LOGICAL                                         *
 C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
-C    T_HE (C)       D: Current Helium temperature                      *
+C    T_COOLANT (C)       D: Current coolant temperature                *
 C    H_HE (W/m^2.K) D: Heat transfer coefficient of He                 *
 C    Q_PFZ (W/m^3)  D: Volumetric heat generation rate in the pebble   *
 C                      fuel zone                                       *
@@ -6925,9 +6929,9 @@ C***********************************************************************
 C
 C***********************************************************************
 C                                                                      *
-      FUNCTION TPEBBLE(T_HE, H_HE, Q_PFZ, R)
+      FUNCTION TPEBBLE(T_COOLANT, H_HE, Q_PFZ, R)
 C
-      DOUBLE PRECISION TPEBBLE, T_HE, H_HE, Q_PFZ, R
+      DOUBLE PRECISION TPEBBLE, T_COOLANT, H_HE, Q_PFZ, R
 	DOUBLE PRECISION PEBRADIUS, PFZRADIUS, R_IN_PEBBLE,
      &                 K_PM, K_PFM, K_PFZ
 	INTEGER*4 NPARTICLE
@@ -6936,17 +6940,17 @@ C
      &                R_IN_PEBBLE, NPARTICLE
 C
       IF ((R.GE.0.0D0).AND.(R.LT.PFZRADIUS)) THEN
-	  TPEBBLE = T_HE + (Q_PFZ*PFZRADIUS**3.0/3.0D0)*
+	  TPEBBLE = T_COOLANT + (Q_PFZ*PFZRADIUS**3.0/3.0D0)*
      &                   (1.0D0/H_HE/PEBRADIUS**2.0 + 
      &                    (1.0D0/PFZRADIUS-1.0D0/PEBRADIUS)/K_PM + 
      &                    (1.0D0/PFZRADIUS-R**2.0/PFZRADIUS**3.0)/
      &                    (2.0D0*K_PFZ))
 	ELSE IF ((R.GE.PFZRADIUS).AND.(R.LE.PEBRADIUS)) THEN
-	  TPEBBLE = T_HE + (Q_PFZ*PFZRADIUS**3.0/3.0D0)*
+	  TPEBBLE = T_COOLANT + (Q_PFZ*PFZRADIUS**3.0/3.0D0)*
      &                   (1.0D0/H_HE/PEBRADIUS**2.0 + 
      &                    (1.0D0/R-1.0D0/PEBRADIUS)/K_PM)
       ELSE
-	  TPEBBLE = T_HE
+	  TPEBBLE = T_COOLANT
 	END IF
       RETURN
 	END
