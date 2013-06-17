@@ -1679,21 +1679,18 @@ C  Calculate the kernel migration distance if mode 2 is ON (MSWITCH = 2):
 C
 C
 C    Account for FP corrosion of SiC, from equation 3.18 in Diecker 2005
+C    Note:  Diecker Thesis uses uses the term DPDn to refer to DCORR
       IF (MSWITCH .EQ. 2)  THEN
         DCORR = (255.2*DT/3600) *
      &            exp(-159.9/(0.008314 * (T_PARTICLE(3)+273.15)))
         R3 = R3 + DCORR
-	       R2 = R2 + DCORR
-	       WRITE(CORR,*) N, OPERTIME, R3
-      ELSE
-          WRITE(*,*) MSWITCH
-          !WRITE(*,*) PSWITCH
-          !WRITE(*,*) MSWITCH
-          STOP          
-C          DCORR = 0.D0
-C          R3=R3+DCORR
-C          R2=R2+DCORR
-C          WRITE(CORR,*) N, OPERTIME, R3
+	R2 = R2 + DCORR
+	WRITE(CORR,*) N, OPERTIME, R3
+      ELSE          
+          DCORR = 0.D0
+          R3=R3+DCORR
+          R2=R2+DCORR
+          WRITE(CORR,*) N, OPERTIME, R3
       END IF
 C
 C    Calculate unrestrained swelling rates in PyC
@@ -2116,14 +2113,20 @@ C    Register end-of-life mean tangential stresses in layers
 		  SIGLOPYC = SIGTOPYC
 		  SIGLSIC  = SIGTSIC
 C
-C    Evaluate fuel failure
+C    Evaluate fuel failure from Pd penetration in SiC
 C    DPD is given by eqn 3.14 from Diecker 2005
 C    DPD = distance of Pd penetration
-C      IF (MSWITCH.EQ.2) THEN
-      IF(RUNIRR .EQ. 'FAILURE') THEN
-       DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+      IF (MSWITCH.EQ.2) THEN
+         IF(RUNIRR .EQ. 'FAILURE') THEN
+         DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
      &        (T_PARTICLE(3)+273.15)))        
-       CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+         CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                     OPERTIME, DT, MD)
+         END IF
+C    With MSWITCH = 1, do not calculate Pd penetration
+      ELSE
+         DPD = 0.0D0
+         CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
       END IF
 C
@@ -2733,10 +2736,17 @@ C    Register end-of-life mean tangential stresses in layers
 		  SIGLOPYC = SIGTOPYC
 		  SIGLSIC  = SIGTSIC
 C
+C    If MSWITCH = 2, then calculate Pd penetration
 C    Evaluate fuel failure, do NOT do so if performing parametric study
-      IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+      IF (MSWITCH .EQ. 2) THEN
+          IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
 	  DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
      &          (T_PARTICLE(3)+273.15)))  
+          CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                     OPERTIME, DT, MD)
+          END IF
+      ELSE
+          DPD = 0.0D0
           CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
      &                     OPERTIME, DT, MD)
       END IF
@@ -3191,12 +3201,19 @@ C    Register end-of-life tangential stresses in layers
 		SIGLOPYC = SIGTOPYC
 		SIGLSIC  = SIGTSIC
 C
+C    If MSWITCH = 2, then calculate Pd penetration
 C    Evaluate fuel failure, do NOT do so if performing parametric study
-      IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
-      DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
-     &      (T_PARTICLE(3)+273.15)))     
-      CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
-     &             OPERTIME, DT, MD)
+      IF (MSWITCH.EQ.2) THEN
+          IF((.NOT.PARAMETRIC_STUDY).AND.(RUNIRR .EQ. 'FAILURE')) THEN
+             DPD = 255.2*(OPERTIME/3600)*exp(-159.9/(0.008314*
+     &             (T_PARTICLE(3)+273.15)))     
+          CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                 OPERTIME, DT, MD)
+          END IF
+      ELSE
+          DPD = 0.0D0
+          CALL FAILURE(SIGR, SIGT, FAIL, FAILTYPE, DPD, N, 
+     &                 OPERTIME, DT, MD)
       END IF
 C
 C    Write to debug file of material strength data
@@ -4434,9 +4451,10 @@ C         Record the elastic response if cracked layer is fully relaxed
 C   First update the layer flags
         IPYCFAILED = 2
 C
-C      KI1 is stress intensity contribution to the SiC layer from KIIPYC
-C      The inherent flaw size of the SiC layer on the IPyC side is approximated as 2 micron
-C      The inherent flaw size of the SiC layer on the OPyC side is approximated as 1 micron
+C   From Diecker Thesis p. 43, KI1 is stress intensity contribution to the SiC layer from KIIPYC
+C   The inherent flaw size of the SiC layer on the IPyC side is approximated as 2 micron plus DPD
+C   If running with MSWITCH = 1, DPD = 0.  If MSWTICH = 2, DPD is calculated   
+C   The inherent flaw size of the SiC layer on the OPyC side is approximated as 1 micron
 C
 	  KI1 = KIIPYC*SQRT((2+DPD)/(R3-R2)) + 0.413*(1.0D0+R2/R4)*SIGTSIC*
      &		SQRT(PIE*(R3-R2))/SQRT(1.0D0 - (R3-R2)/(R4-R2))
