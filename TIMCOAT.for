@@ -1005,10 +1005,12 @@ C
 	SIGLVARS = 0.0D0   ! Standard deviation of EOL tangential stress in SiC
 	SIGLVARO = 0.0D0   ! Standard deviation of EOL tangential stress in OPyC
 C
-C  Reactor core and TRISO fuel input data dialog boxes
-C 115	Call InputDialog(INPFILE1)
-      INPFILE1='DS_MPBR1.dat'
-	FILESTAT = 'OLD'
+C  Reactor core and TRISO fuel input data
+      WRITE(ITERM,*) 'What is the input file name?  Include .dat',
+     &                ' extension.'
+      READ(IKEY,*) INPFILE1
+C      INPFILE1='FHR_1.dat'
+      FILESTAT = 'OLD'
       OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
      &     IOSTAT=INPSTATUS)
 	IF(INPSTATUS>0) THEN

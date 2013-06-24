@@ -1005,10 +1005,12 @@ C
 	SIGLVARS = 0.0D0   ! Standard deviation of EOL tangential stress in SiC
 	SIGLVARO = 0.0D0   ! Standard deviation of EOL tangential stress in OPyC
 C
-C  Reactor core and TRISO fuel input data dialog boxes
-C 115	Call InputDialog(INPFILE1)
-      INPFILE1='DS_MPBR1.dat'
-	FILESTAT = 'OLD'
+C  Reactor core and TRISO fuel input data
+C      WRITE(ITERM,*) 'What is the input file name?  Include .dat',
+C     &                ' extension.'
+C      READ(IKEY,*) INPFILE1
+      INPFILE1='FHR_1.dat'
+      FILESTAT = 'OLD'
       OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
      &     IOSTAT=INPSTATUS)
 	IF(INPSTATUS>0) THEN
@@ -5560,9 +5562,9 @@ C  Thermal properties for coolant He (from A. F. Mills)
       ELSE
 C  Thermal properties of coolant Flibe
       CP_FLIBE = 2390.0D0    ![J/kg.K]  specific heat capacity from Benes 2012 section 3.13.4.5.1 
-      K_FLIBE = 0.0005*(T_COOLANT+273.15)+(32.0/33.0)-0.34    ![W/m.K]  from Ignatiev Correlation.  Eqn 6 from ORNL/TM-2006/12
-      D_FLIBE = 2415.6 - 0.49072*(T_COOLANT+273.15)   ![kg/m^3] from Zaghloul Correlation.  Eqn 2.14 from INL/EXT-10-18297
-      MU_FLIBE = (0.116*EXP(3755/(T_COOLANT+273.15)))/1000   ![Pa.s] = [kg/m.s] Eqn 6 from Benes 2012 
+      K_FLIBE = 0.0005D0*(T_COOLANT+273.15D0)+(32.0D0/33.0D0)-0.34D0    ![W/m.K]  from Ignatiev Correlation.  Eqn 6 from ORNL/TM-2006/12
+      D_FLIBE = 2415.6D0 - 0.49072D0*(T_COOLANT+273.15D0)   ![kg/m^3] from Zaghloul Correlation.  Eqn 2.14 from INL/EXT-10-18297
+      MU_FLIBE = (0.116D0*EXP(3755.0D0/(T_COOLANT+273.15D0)))/1000.0D0   ![Pa.s] = [kg/m.s] Eqn 6 from Benes 2012 
 C
       END IF
 C  TRISO fuel geometries, including calculation of fuel swelling
