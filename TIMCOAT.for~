@@ -1006,10 +1006,10 @@ C
 	SIGLVARO = 0.0D0   ! Standard deviation of EOL tangential stress in OPyC
 C
 C  Reactor core and TRISO fuel input data
-C      WRITE(ITERM,*) 'What is the input file name?  Include .dat',
-C     &                ' extension.'
-C      READ(IKEY,*) INPFILE1
-      INPFILE1='FHR_1.dat'
+      WRITE(ITERM,*) 'What is the input file name?  Include .dat',
+     &                ' extension.'
+      READ(IKEY,*) INPFILE1
+C      INPFILE1='FHR_1.dat'
       FILESTAT = 'OLD'
       OPEN(FILE = INPFILE1,STATUS = FILESTAT,UNIT = IDAT1, 
      &     IOSTAT=INPSTATUS)
@@ -1162,8 +1162,8 @@ C  In order to perform parametric study, place the flag PARAMETRIC_STUDY as true
 	PARAMETRIC_STUDY = .FALSE.
 C  If perturbation analysis is to be performed, set PERTURBATION_ANALYSIS to .TRUE.
 C  If surface analysis is to be performed, set SURFACE_ANALYSIS to .TRUE., instead
-	PERTURBATION_ANALYSIS = .TRUE.
-c	SURFACE_ANALYSIS = .TRUE.
+	PERTURBATION_ANALYSIS = .FALSE.
+	SURFACE_ANALYSIS = .FALSE.
 C
 C  Open output files
        OPEN (FILE = TRIM(OSPEC)//'.out',STATUS = "REPLACE",UNIT = IOUT)	
@@ -1379,33 +1379,33 @@ C
       IF(.NOT. PARAMETRIC_STUDY) THEN
 C         Write headings to stress, strains, and displacement output files
           WRITE(IOUTSR,629) RADIUS
-          WRITE(IOUTST,629) RADIUS
+          WRITE(IOUTST,629, ADVANCE='NO') RADIUS
           WRITE(IOUTER,642) RADIUS
           WRITE(IOUTET,642) RADIUS
-          WRITE(IOUTUR,629) RADIUS
+          WRITE(IOUTUR,629, ADVANCE='NO') RADIUS
           DO 127 K = 0, NDIVI+1
 	      RADIUS = K*(R3-R2)/FLOAT(NDIVI+1) + R2
 	      WRITE(IOUTSR,629) RADIUS
-            WRITE(IOUTST,629) RADIUS
+            WRITE(IOUTST,629, ADVANCE='NO') RADIUS
             WRITE(IOUTER,642) RADIUS
             WRITE(IOUTET,642) RADIUS
-            WRITE(IOUTUR,629) RADIUS
+            WRITE(IOUTUR,629, ADVANCE='NO') RADIUS
 127       CONTINUE
           DO 128 K = 0, NDIVS+1
 	      RADIUS = K*(R4-R3)/FLOAT(NDIVS+1) + R3
 	      WRITE(IOUTSR,629) RADIUS
-            WRITE(IOUTST,629) RADIUS
+            WRITE(IOUTST,629, ADVANCE='NO') RADIUS
             WRITE(IOUTER,642) RADIUS
             WRITE(IOUTET,642) RADIUS
-            WRITE(IOUTUR,629) RADIUS
+            WRITE(IOUTUR,629, ADVANCE='NO') RADIUS
 128       CONTINUE
           DO 129 K = 0, NDIVO+1
 	      RADIUS = K*(R5-R4)/FLOAT(NDIVO+1) + R4
 	      WRITE(IOUTSR,629) RADIUS
-            WRITE(IOUTST,629) RADIUS
+            WRITE(IOUTST,629, ADVANCE='NO') RADIUS
             WRITE(IOUTER,642) RADIUS
             WRITE(IOUTET,642) RADIUS
-            WRITE(IOUTUR,629) RADIUS
+            WRITE(IOUTUR,629, ADVANCE='NO') RADIUS
 129       CONTINUE
           WRITE(IOUTSR,*)
           WRITE(IOUTST,*)
@@ -2244,16 +2244,16 @@ C    Output a bunch of results to various output files
 	        WRITE(IOUTSW,628) HCARD(J,4), HCARD(J,16), HCARD(J,17), 
      &                         HCARD(J,18), HCARD(J,19)
 	        WRITE(IOUTSR,629) HCARD(J,4)
-	 	    WRITE(IOUTST,629) HCARD(J,4)
+	 	    WRITE(IOUTST,629, ADVANCE='NO') HCARD(J,4)
 	        WRITE(IOUTER,642) HCARD(J,4)
 	 	    WRITE(IOUTET,642) HCARD(J,4)
-	        WRITE(IOUTUR,629) HCARD(J,4)
+	        WRITE(IOUTUR,629, ADVANCE='NO') HCARD(J,4)
 		    DO 280 K = 1, NDIV
 	          WRITE(IOUTSR, 629) SIGR(K)
-	          WRITE(IOUTST, 629) SIGT(K)
+	          WRITE(IOUTST, 629, ADVANCE='NO') SIGT(K)
 	          WRITE(IOUTER, 641) EPIR(K)
 	          WRITE(IOUTET, 641) EPIT(K)
-	          WRITE(IOUTUR, 629) UR(K)
+	          WRITE(IOUTUR, 629, ADVANCE='NO') UR(K)
 280           CONTINUE
               WRITE(IOUTSR,*)
               WRITE(IOUTST,*)
@@ -2859,16 +2859,16 @@ C
 C             Send stresses, strains, and displacement to output files
               WRITE(ITEST,*)  HCARDB(J,1), HCARDB(J,4), HCARDB(J,7)
 	        WRITE(IOUTSR,629) HCARDB(J,4)
-	        WRITE(IOUTST,629) HCARDB(J,4)
+	        WRITE(IOUTST,629, ADVANCE='NO') HCARDB(J,4)
 	        WRITE(IOUTER,642) HCARDB(J,4)
 	        WRITE(IOUTET,642) HCARDB(J,4)
-	        WRITE(IOUTUR,629) HCARDB(J,4)
+	        WRITE(IOUTUR,629, ADVANCE='NO') HCARDB(J,4)
               DO 778 K = 1, NDIV
 	          WRITE(IOUTSR, 629) SIGR(K)
-	          WRITE(IOUTST, 629) SIGT(K)
+	          WRITE(IOUTST, 629, ADVANCE='NO') SIGT(K)
 	          WRITE(IOUTER, 641) EPIR(K)
 	          WRITE(IOUTET, 641) EPIT(K)
-	          WRITE(IOUTUR, 629) UR(K)
+	          WRITE(IOUTUR, 629, ADVANCE='NO') UR(K)
 778           CONTINUE
               WRITE(IOUTSR,*)
               WRITE(IOUTST,*)
@@ -3046,16 +3046,16 @@ C
 	    IF((.NOT.PARAMETRIC_STUDY) .AND. NOMINAL) THEN
 C    Send stresses, strains, and displacement to output files
 	      WRITE(IOUTSR,629) HCARDB(J,4)
-	      WRITE(IOUTST,629) HCARDB(J,4)
+	      WRITE(IOUTST,629, ADVANCE='NO') HCARDB(J,4)
 	      WRITE(IOUTER,642) HCARDB(J,4)
 	      WRITE(IOUTET,642) HCARDB(J,4)
-	      WRITE(IOUTUR,629) HCARDB(J,4)
+	      WRITE(IOUTUR,629, ADVANCE='NO') HCARDB(J,4)
             DO 1142 K = 1, NDIV
 	        WRITE(IOUTSR, 629) SIGR(K)
-	        WRITE(IOUTST, 629) SIGT(K)
+	        WRITE(IOUTST, 629, ADVANCE='NO') SIGT(K)
 	        WRITE(IOUTER, 641) EPIR(K)
 	        WRITE(IOUTET, 641) EPIT(K)
-	        WRITE(IOUTUR, 629) UR(K)
+	        WRITE(IOUTUR, 629, ADVANCE='NO') UR(K)
 1142        CONTINUE
             WRITE(IOUTSR,*)
             WRITE(IOUTST,*)
@@ -3324,16 +3324,16 @@ C
 C    Send stresses, strains, and displacement to output files
             WRITE(ITEST,*)  HCARDB(J,1), HCARDB(J,4), HCARDB(J,7)
 	      WRITE(IOUTSR,629) HCARDB(J,4)
-	      WRITE(IOUTST,629) HCARDB(J,4)
+	      WRITE(IOUTST,629, ADVANCE='NO') HCARDB(J,4)
 	      WRITE(IOUTER,642) HCARDB(J,4)
 	      WRITE(IOUTET,642) HCARDB(J,4)
-	      WRITE(IOUTUR,629) HCARDB(J,4)
+	      WRITE(IOUTUR,629, ADVANCE='NO') HCARDB(J,4)
             DO 1190 K = 1, NDIV
 	        WRITE(IOUTSR, 629) SIGR(K)
-	        WRITE(IOUTST, 629) SIGT(K)
+	        WRITE(IOUTST, 629, ADVANCE='NO') SIGT(K)
 	        WRITE(IOUTER, 641) EPIR(K)
 	        WRITE(IOUTET, 641) EPIT(K)
-	        WRITE(IOUTUR, 629) UR(K)
+	        WRITE(IOUTUR, 629, ADVANCE='NO') UR(K)
 1190        CONTINUE
             WRITE(IOUTSR,*)
             WRITE(IOUTST,*)
