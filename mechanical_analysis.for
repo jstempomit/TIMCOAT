@@ -6,7 +6,7 @@ C  Author:      Jing Wang, NED MIT, April 21, 2003                     *
 C                                                                      *
 C  Description: Use IMSL math libraries to apply series solutions and  *
 C               calculate stress, strain and displacement distributions*
-C			  in TRISO particles.                                    *
+C               in TRISO particles.                                    *
 C                                                                      *
 C  Improvements: Poisson's ratio for creep could be changed instead of *
 C               being fixed at 0.5 in earlier formulation.             *
@@ -23,10 +23,10 @@ C                                                                      *
 C  Actual argument description                                         *
 C                                                                      *
 C    MCODE           C: Indicates the type of analysis to perform      *
-C					 'ISO3': full three-layer analysis               *
-C					 'IS2' : IPyC/SiC two-layer analysis             *
-C					 'SO2' : SiC/OPyC two-layer analysis             *
-C					 'S1'  : SiC single-layer analysis               *
+C                      'ISO3': full three-layer analysis               *
+C                      'IS2' : IPyC/SiC two-layer analysis             *
+C                      'SO2' : SiC/OPyC two-layer analysis             *
+C                      'S1'  : SiC single-layer analysis               *
 C    PRESS (MPa)    D: Internal gas pressure                           *
 C    PAMB (MPa)     D: External ambient pressure                       *
 C    FLU (10^21nvt) D: Fluence at time of calculation                  *
@@ -39,8 +39,8 @@ C                   D: Radial strain distribution over three layers    *
 C    EPIT(1:NDIV) -- returned quantity                                 *
 C                   D: Tangential strain distribution over three layers*
 C    UR(1:NDIV) (um) -- returned quantity                              *
-C				  D: Radial displacement distribution over three     *
-C					 layers                                          *
+C                   D: Radial displacement distribution over three     *
+C                      layers                                          *
 C                                                                      *
 C  Variables in COMMON blocks                                          *
 C  /PAR_R/ :  fuel particle current geometry                           *
@@ -77,25 +77,25 @@ C    OSWT(0:NDEG)   D: Array of length NDEG+1 storing coefficients of  *
 C                      the polynomial of OPyC tangential swelling rate *
 C  /CRACKED_PYC/ :  Quantities related to cracked PyC layers           *
 C    EPIRCP(1:NDIV) D: Array recording the elastic radial strains of   *
-C					 fully relaxed PyC layers at point of cracking.  *
-C					 The symbol means 'Epsilon R of C prime'         *
+C                      fully relaxed PyC layers at point of cracking.  *
+C                      The symbol means 'Epsilon R of C prime'         *
 C    EPITCP(1:NDIV) D: Array recording the elastic tangential strains  *
-C					 of fully relaxed PyC layers at point of cracking*
-C					 The symbol means 'Epsilon T of C prime'         *
+C                      of fully relaxed PyC layers at point of cracking*
+C                      The symbol means 'Epsilon T of C prime'         *
 C    URCP(1:NDIV)   D: Array recording the elastic radial displacement *
-C					 of fully relaxed PyC layers at point of cracking*
-C					 The symbol means 'Ur of C prime'                *
+C                      of fully relaxed PyC layers at point of cracking*
+C                      The symbol means 'Ur of C prime'                *
 C    KIIPYC(MPa.um^1/2) D:                                             *
-C					 Stress intensity factor in IPyC layer           *
+C                      Stress intensity factor in IPyC layer           *
 C    KIOPYC(MPa.um^1/2) D:                                             *
-C					 Stress intensity factor in OPyC layer           *
+C                      Stress intensity factor in OPyC layer           *
 C    KI1 (MPa.um^1/2)D: Stress intensity factor from IPyC crack        *
 C    KI2 (MPa.um^1/2)D: Stress intensity factor from OPyC crack        *
 C    SHEARIPYC(MPa.um)  D:                                             *
-C					 The shear force per unit length on SiC surface  *
+C                      The shear force per unit length on SiC surface  *
 C                      induced by IPyC crack                           *
 C    SHEAROPYC(MPa.um)  D:                                             *
-C					 The shear force per unit length on SiC surface  *
+C                      The shear force per unit length on SiC surface  *
 C                      induced by OPyC crack                           *
 C    DF(10^21nvt)   D: Incremental fluence since last step             *
 C                                                                      *
@@ -106,18 +106,18 @@ C    A(0:IORDER+1), B, D, F, M, N --                                   *
 C                   D: Coefficients for stresses                       *
 C    SIG* (MPa)     D: Intermediate stress variables for calculations  *
 C    EPIIR, EPIIT   D: The i-th order term of radial and tangential    *
-C					 strains                                         *
+C                      strains                                         *
 C    UIR            D: The i-th order term of radial displacement      *
 C    EPITP          D: Tangential strain induced by shear force at     *
 C                      PyC/SiC interfaces.                             *
 C    URP (um)       D: Radial displacement induced by shear force at   *
-C					 PyC/SiC interfaces.                             *
+C                      PyC/SiC interfaces.                             *
 C    AIPYC (um)     D: The crack length in IPyC layer                  *
 C    AOPYC (um)     D: The crack length in OPyC layer                  *
 C    SIGTPIBAR      D: Average tangential stress due to shear force at *
-C					 IPyC/SiC interface.                             *
+C                      IPyC/SiC interface.                             *
 C    SIGTPOBAR      D: Average tangential stress due to shear force at *
-C					 OPyC/SiC interface.                             *
+C                      OPyC/SiC interface.                             *
 C    SWELLRIPYC (1/10^21nvt) D:                                        *
 C                      Current radial swelling rate in IPyC.           *
 C    SWELLROPYC (1/10^21nvt) D:                                        *
@@ -127,11 +127,11 @@ C                      Current tangential swelling rate in IPyC.       *
 C    SWELLTOPYC (1/10^21nvt) D:                                        *
 C                      Current tangential swelling rate in OPyC.       *
 C    WSHEARIPYC (MPa.um^3) D:                                          *
-C					 The shear strain energy associated with a crack *
-C					 in IPyC layer                                   *
+C                      The shear strain energy associated with a crack *
+C                      in IPyC layer                                   *
 C    WSHEAROPYC (MPa.um^3) D:                                          *
-C					 The shear strain energy associated with a crack *
-C					 in OPyC layer                                   *
+C                      The shear strain energy associated with a crack *
+C                      in OPyC layer                                   *
 C    L*, G*, V*, C*, P*, F*, S* --                                     *
 C                   D: Intermediate variables                          *
 C                                                                      *

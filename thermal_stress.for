@@ -10,7 +10,7 @@ C                                                                      *
 C                                                                      *
 C  Assumption:  Spherical symmetry applies, and the analysis is 3D.    *
 C               The pyrocarbon layers are anisotropic and SiC layer    *
-C               is isotropic.							                 *
+C               is isotropic.                                          *
 C                                                                      *
 C                                                                      *
 C  Actual argument description                                         *

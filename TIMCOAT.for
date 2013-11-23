@@ -11,7 +11,7 @@ C                                                                      *
 C  Date: February, 2004                                                *
 C                                                                      *
 C  General Description                                                 *
-C     The program name is a acronym for The Integrated Model of        *
+C     The program name is an acronym for The Integrated Model of       *
 C  COATed particle fuel performance.                                   *
 C     This FORTRAN program is the implementation of the fuel           *
 C  performance model for High Temperature Gas-cooled Reactors (HTGRs). *
@@ -782,7 +782,7 @@ C  Define interfaces of external procedures
 C
 	     INTERFACE
         SUBROUTINE FEEDPEBBLE(COREMODEL, CHANNELS, ENTRANCE,
-     &						                  WHICH_CHN, PATH)
+     &                                  WHICH_CHN, PATH)
           DOUBLE PRECISION CHANNELS, ENTRANCE, PATH
           INTEGER   COREMODEL, WHICH_CHN
           DIMENSION CHANNELS(1:,-1:), PATH(1:,1:)
@@ -1108,7 +1108,7 @@ C     These numbers must be consistent with the input files above.
 	  WRITE(ITERM,*) ' Please tell me the number of channels,',
      &				 ' axial divisions, and blocks in the core: '
 	  READ(IKEY,*) NCHANNEL, NAXIAL, NLAYER
-	  WRITE(ITERM,*) ' Thanks.'
+	  WRITE(ITERM,*) ' Thank You.'
 C
 	  ALLOCATE (CHANNELS(NAXIAL,-1:NCHANNEL))
 	  ALLOCATE (BLOCKS(NLAYER,5))
@@ -1132,7 +1132,7 @@ C            STOP
        OPEN(FILE = INPFILE3,STATUS = FILESTAT,UNIT = IDAT3, 
      &     IOSTAT=INPSTATUS)
         FOPEN3 = .TRUE.
-        WRITE(ITERM,*) ' Thanks.'
+        WRITE(ITERM,*) ' Thank You.'
         LENGTH_OF_FILE = 0
 C     Scan the length of the file
         DO
@@ -1159,11 +1159,11 @@ C     Determine the dimension of array of irradiaton history and read in data
       WRITE(ITERM,*)
 C
 C  In order to perform parametric study, place the flag PARAMETRIC_STUDY as true
-	PARAMETRIC_STUDY = .FALSE.
+      PARAMETRIC_STUDY = .FALSE.
 C  If perturbation analysis is to be performed, set PERTURBATION_ANALYSIS to .TRUE.
-C  If surface analysis is to be performed, set SURFACE_ANALYSIS to .TRUE., instead
-	PERTURBATION_ANALYSIS = .FALSE.
-	SURFACE_ANALYSIS = .FALSE.
+      PERTURBATION_ANALYSIS = .FALSE.
+C  If surface analysis is to be performed, set SURFACE_ANALYSIS to .TRUE.
+      SURFACE_ANALYSIS = .FALSE.
 C
 C  Open output files
        OPEN (FILE = TRIM(OSPEC)//'.out',STATUS = "REPLACE",UNIT = IOUT)	
@@ -1290,7 +1290,7 @@ C  Prepare several irradiation dependent parameters based on inputs for constant
 	  BPRATE = EOLBUP*BU_CONV/IRRTIME
 	  FFLUX = EOLFLU*1.0D21/(IRRTIME*86400.0D0)
 	  LENGTH_OF_FILE = INT(EOLFLU*1.0D21/(FFLUX*DT)+1.5D0)
-        ALLOCATE (HCARDB(0:LENGTH_OF_FILE,19))
+          ALLOCATE (HCARDB(0:LENGTH_OF_FILE,19))
 	  ALLOCATE (HSIGRB(0:LENGTH_OF_FILE,NDIV))
 	  ALLOCATE (HSIGTB(0:LENGTH_OF_FILE,NDIV))
 	END IF
@@ -1376,7 +1376,7 @@ C    NOMINAL = .FALSE. --> Sample NCASES particles (NCASES about 1,000,000)
      &                    SIGFSICI,SICM)
         KICSICI = SICKIC0
 C
-      IF(.NOT. PARAMETRIC_STUDY) THEN
+        IF(.NOT. PARAMETRIC_STUDY) THEN
 C         Write headings to stress, strains, and displacement output files
           WRITE(IOUTSR,629, ADVANCE='NO') RADIUS
           WRITE(IOUTST,629, ADVANCE='NO') RADIUS
@@ -1414,7 +1414,7 @@ C         Write headings to stress, strains, and displacement output files
           WRITE(IOUTUR,*)
 	  END IF
 C
-      ELSE           ! Perform sampling and check limits
+      ELSE           ! Perform sampling and check limits if NOMINAL=.FALSE.
 C130     R10 = GAUSSIAN(KERNDIA,  KERNVAR)/X2
 C        IF (R10 .LE. X0) GOTO 130
 C        R1 = R10
@@ -1558,7 +1558,7 @@ C    Clear creep strains
 	  E_OPYCREEP0(I) = 0.0D0
 206	CONTINUE
 C
-C  Write to debug file various info. at the initial state
+C  Write to debug file various information at the initial state
 	IF((.NOT.PARAMETRIC_STUDY) .AND. DEBUG .AND. NOMINAL) THEN
 	  WRITE(IDBG, *) 'Start of debug file'
 	  WRITE(IDBG, *)
@@ -1600,7 +1600,7 @@ C    Sample one channel into which the pebble goes and the path it flows
 	    FLUENCE_R = 0.0D0
 	    T_COOLANT = T_COOLIN
         CALL TEMPERATURE(0.0D0, T_COOLANT, BURNUP, T_PARTICLE,CSWITCH)  !Reset T_PARTICLE at the entrance
-C    Calculate the total power of this channel for the purpose of scaling He temp.
+C    Calculate the total power of this channel for the purpose of scaling coolant temperature.
           P_CHANNEL = 0.0D0
           DO 230 J = 1, NBLOCK
 	      WHICH_BLK = BLOCKMAP(2,WHICH_CHN)-BLOCKMAP(1,WHICH_CHN)+J
@@ -1826,6 +1826,7 @@ C	      ELSE IF(STAT(10).NE.0) THEN  !Data contain NaN
 C	        CALL ERR_HANDLER('Main: Fitting data for OSWT contain NaN',
 C     &                    39,1,1,IERR)
 C	      END IF
+C
 C    End of polynomial fitting
           END IF
 C    Examine the fitting results
@@ -1884,6 +1885,8 @@ C    Accumulate apparent creep strains
 		  CALL EPI_C('OPYC',SIGR,SIGT,OPYCREEP,
      &                 OPYCCNU,D_FLUENCE,E_OPYCREEP)
 240       CONTINUE
+C
+C
 C  End of first time stress analysis
 C
 C  Second time stress analysis: restrained condition
@@ -1893,7 +1896,7 @@ C    Restore apparent creep strains from last cycle
 		E_OPYCREEP(1) = E_OPYCREEP0(1)
 		E_OPYCREEP(2) = E_OPYCREEP0(2)
 C
-C    convert unrestrained dimensional changes to restrained ones
+C    Convert unrestrained dimensional changes to restrained ones
 		DO 255 J = 1, TIMESTEP
 C    Calculate irradiated BAF, apparent creep strains and restrained swelling rates in PyC
 		  IPYCBAFI = BAFI_PYC(IPYCBAF0, HCARD(J, 4))
@@ -2077,6 +2080,7 @@ C    Accumulate apparent creep strains
 		  CALL EPI_C('OPYC',SIGR,SIGT,OPYCREEP,
      &                 OPYCCNU,D_FLUENCE,E_OPYCREEP)
 C
+C    End of Second-time stress analysis?????
 C    Update the mean fracture strength of PyC layers due to temp. variation and irradiation
 	CALL STRENGTH_PYC('IPYC','IRR',IPYCD,IPYCBAF0,HCARD(J,4),
      &			  HCARD(J,12),SIGT,IPYCF,SIGFIPYC,IPYCM)
@@ -2263,7 +2267,7 @@ C    Output a bunch of results to various output files
 		  END IF
 C
             IF(FAIL) THEN
-C             write information about the failed particle
+C             Write information about the failed particle
 		IF(.NOT.NOMINAL) THEN
 		  WRITE(IOUTFL, 645) PARFAIL, FMODE, R1, R2, R3, R4, R5,
      &				BDEN, IPYCD, OPYCD, IPYCBAF0, OPYCBAF0,
@@ -2471,7 +2475,7 @@ C	      WRITE(IOUTSW,628) ISWR(0), ISWR(1), ISWR(2), ISWR(3)
 C	      WRITE(IOUTSW,628) ISWT(0), ISWT(1), ISWT(2), ISWT(3)
 C	      WRITE(IOUTSW, *)
 C		END IF
-C		Restore apparent creep strains from last cycle
+C             Restore apparent creep strains from last cycle
 		E_IPYCREEP(1) = E_IPYCREEP0(1)
 		E_IPYCREEP(2) = E_IPYCREEP0(2)
 		E_OPYCREEP(1) = E_OPYCREEP0(1)
@@ -2926,7 +2930,7 @@ C***********************************************************************
 C***********************************************************************
 C                                                                      *
 C                                                                      *
-	ELSE    !PSWITCH choice is important here
+	ELSE    !This loop is used if PSWITCH = 3
 C
 	  DO 1110 K = 0, 5
 	    T_PARTICLE(K) = T_IRR
@@ -3365,7 +3369,7 @@ C***********************************************************************
 C***********************************************************************
       ENDIF
 C  Send to the terminal intermediate results per NBURP of particles. 
-C  NCASES of particles are divided into groups NBURP particles for statistical purpose.
+C  NCASES of particles are divided into groups of NBURP particles for statistical purposes.
 990   IF (MOD(N,NBURP) .EQ. 0) THEN
         TIME = 0.0
         WRITE(ITERM,605) N, TIME, PARFAIL, SICFAIL, IPYCFAIL, OPYCFAIL
@@ -3599,14 +3603,14 @@ C     A                 'seconds'
 C	END IF
 C
 C  Print the elapsed CPU time to the terminal
-      CPUTIME = MCLOCK()
+      CALL CPU_TIME(TIME)
       WRITE(ITERM,*)
-      WRITE(ITERM,*)'Elapsed calculation time (sec):', CPUTIME/1000
+      WRITE(ITERM,*)'Elapsed calculation time (sec):', TIME
       WRITE(ITERM,*)
 C  Print the number of particles per second to the terminal
 	WRITE(ITERM,*)
 	WRITE(ITERM,*) 'Average number of particles per second = ',
-     A                FLOAT(NCASES)/(CPUTIME/1000)
+     A                FLOAT(NCASES)/(TIME)
 	WRITE(ITERM,*)
 C
 C	WRITE(IOUT,*)
@@ -4200,7 +4204,7 @@ C    OPYCFAIL       I: Number of particles with OPyC failure           *
 C    SICFAIL        I: Number of particles with SiC failure            *
 C    PARFAIL        I: Number of failed particles                      *
 C    IPYCFAILED     I: Indicates if IPyC failed or not                 *
-C                      0: means it's fine                              *
+C                      0: means IPyc is not failed                     *
 C                      1: means it just failed                         *
 C                      2: means it already failed                      *
 C    OPYCFAILED     I: Indicates if OPyC failed or not                 *
@@ -4469,8 +4473,9 @@ C   First update the layer flags
 C
 C   From Diecker Thesis p. 43, KI1 is stress intensity contribution to the SiC layer from KIIPYC
 C   The inherent flaw size of the SiC layer on the IPyC side is approximated as 2 micron plus DPD
-C   If running with MSWITCH = 1, DPD = 0.  If MSWTICH = 2, DPD is calculated   
-C   The inherent flaw size of the SiC layer on the OPyC side is approximated as 1 micron
+C   If running with MSWITCH = 1, DPD = 0.  If MSWTICH = 2, DPD is calculated in the main program    
+C   and is passed here from the main program.  The inherent flaw size of the SiC layer on the OPyC 
+C   side is approximated as 1 micron.
 C
 	  KI1 = KIIPYC*SQRT((2+DPD)/(R3-R2)) + 0.413*(1.0D0+R2/R4)*SIGTSIC*
      &		SQRT(PIE*(R3-R2))/SQRT(1.0D0 - (R3-R2)/(R4-R2))
@@ -4720,7 +4725,7 @@ C    C               : CHARACTER*n                                     *
 C                                                                      *
 C  Actual argument description                                         *
 C    COREMODEL      I: indicates whether new or old core model is      *
-C					 employed. (currently 1 for new and 2 for old)   *
+C		       employed. (currently 1 for new and 2 for old)   *
 C    CHANNELS(NAXIAL,-1:NCHANNEL) --                                   *
 C                   D: defines boundary lines of every channel         *
 C                      format: (z-position,r-position)                 *
@@ -4768,7 +4773,7 @@ C
         MODERATOR = CHANNELS(1,0)
         CALL RANDOM_NUMBER(RN)
 2405    R = WIDTH*RN
-        IF(R.LE.MODERATOR) THEN !Pebbles don't go into moderator, so sample again
+        IF(R.LE.MODERATOR) THEN !Pebbles cannot go into moderator. Sample again
           GO TO 2405
         END IF
         CALL LOCATE_ARRAY(CHANNELS(1,0:5),6,1,R,WHICH_CHN)
@@ -4788,7 +4793,7 @@ C  Calculate the streamline of pebble
         MODERATOR = CHANNELS(1,1)
 2415  CALL RANDOM_NUMBER(RN)  
       R = WIDTH*RN
-        IF(R.LE.MODERATOR) THEN !Pebbles don't go into moderator, so sample again
+        IF(R.LE.MODERATOR) THEN !Pebbles cannot go into moderator. Sample again
           GO TO 2415
 	  ELSE IF(R.LE.CHANNELS(1,2)) THEN
 	  CALL RANDOM_NUMBER(RN)
@@ -4821,7 +4826,7 @@ C***********************************************************************
 C  Subroutine GASRLS(T_PARTICLE, BURNUP, OPERTIME, DIFFUSION, PRESSURE)*
 C                                                                      *
 C    This subroutine calculates the fraction of fission gas released,  *
-C  the Oxygen produced, and the internal pressure by ideal gas law as  *
+C  the oxygen produced, and the internal pressure by ideal gas law as  *
 C  a function of temperature, burnup and reactor operating time.       *
 C    The reference to this subroutine is R. Gontard, H. Nabielek, "    *
 C  Performance Evaluation of Modern HTR TRISO Fuel," HTA-IB-05/90,     *
@@ -5674,7 +5679,7 @@ C   Heat transfer coefficient of He is calculated using Achenbach Correlation.
      &       (((1.18D0*RE_HE**0.58D0)**4.0D0+
      &         (0.23D0*RE_HE**0.75D0)**4.0D0)**0.25D0)
       ELSE
-C   Need heat transfer coefficient for flibe in a packed bed.  Achenbach should be appropriate (250<Re<500000)
+C   Need heat transfer coefficient for flibe in a packed bed.  Achenbach should be appropriate (250<Re<500000).  Maybe change to Ergun.
       PEBDIAMETER = 2.0D0*PEBRADIUS
       VC_FLIBE = MF_COOLANT/(D_FLIBE*A_CORE*(1.0D0-PACKING))  !Flibe characteristic velocity
       RE_FLIBE = D_FLIBE*PEBDIAMETER*VC_FLIBE/MU_FLIBE        !Reynold's number of flibe
@@ -6939,7 +6944,7 @@ C***********************************************************************
 C  Function TPEBBLE(T_COOLANT, H_COOLANT, Q_PFZ, R)                    *
 C                                                                      *
 C    Calcuate the temperature (C) at radius R in a pebble, given the   *
-C  He temperature, He heat transfer coefficient and power density in   *
+C  coolant temperature, heat transfer coefficient and power density in *
 C  the pebble fuel zone.                                               *
 C                                                                      *
 C  Notation                                                            *
